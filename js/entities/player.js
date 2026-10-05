@@ -291,6 +291,12 @@
         ctx.fillRect(2, -3, 18, 6);
         ctx.fillStyle = '#6b4a2a';
         ctx.fillRect(-2, -3, 6, 9);
+      } else if (this.character.attack === 'orb') {
+        Draw.glow(ctx, 16, 0, 12, this.character.rgb, 0.9);
+        ctx.fillStyle = '#f3eaff';
+        ctx.beginPath();
+        ctx.arc(16, 0, 4, 0, Math.PI * 2);
+        ctx.fill();
       } else if (this.character.attack === 'hammer') {
         ctx.fillStyle = '#8a8f98';
         ctx.fillRect(2, -2, 16, 4);

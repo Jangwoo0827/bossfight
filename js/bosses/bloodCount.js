@@ -32,6 +32,7 @@
         { name: 'pools', weight: 1.6, cooldown: 5, fn: this.atkPools },
         { name: 'rush', weight: 2, cooldown: 3, minRange: 200, fn: this.atkRush },
         { name: 'siphon', weight: (b, d) => (d > 240 ? 3 : 1), cooldown: 9, fn: this.atkSiphon },
+        { name: 'elite', weight: 1.6, cooldown: 8, elite: true, fn: this.atkEliteMoon },
       ];
     }
 
@@ -184,6 +185,31 @@
         yield 0.4;
       }
       this.statusText = '';
+    }
+
+    // ELITE: a ring of bats closes in slowly from every side — dash through the gaps or clear them
+    *atkEliteMoon() {
+      this.stop();
+      this.statusText = 'CRIMSON MOON';
+      this.chargeUp(0.9, '#ff1030');
+      const p = this.player;
+      const n = 12;
+      const offset = Math.random() * Math.PI * 2;
+      for (let i = 0; i < n; i++) {
+        const a = offset + (i / n) * Math.PI * 2;
+        const pos = Geo.clampToArena(p.x + Math.cos(a) * 330, p.y + Math.sin(a) * 330, 20);
+        this.hazard({ shape: 'circle', x: pos.x, y: pos.y, radius: 18, warn: 0.9, damage: 0, color: '255,40,60' });
+      }
+      yield 0.9;
+      for (let i = 0; i < n; i++) {
+        const a = offset + (i / n) * Math.PI * 2;
+        const pos = Geo.clampToArena(p.x + Math.cos(a) * 330, p.y + Math.sin(a) * 330, 20);
+        const proj = new BR.Projectile({ owner: 'boss', kind: 'bat', x: pos.x, y: pos.y, angle: a + Math.PI, speed: 140, radius: 9, damage: Math.round(9 * this.damageMult), life: 4.5, homing: 0.7 });
+        this.game.projectiles.push(proj);
+      }
+      this.game.audio.play('shoot');
+      this.statusText = '';
+      yield 0.8;
     }
 
     /* ---- drawing ---- */

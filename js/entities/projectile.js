@@ -29,6 +29,7 @@
       this.isSkill = !!o.isSkill;
       this.isFinisher = !!o.isFinisher;
       this.unclearable = !!o.unclearable;   // skills can't delete it (big boss bullets)
+      this.onHit = o.onHit || null;         // player projectiles: called when hitting the boss
       this.age = 0;
       this.dead = false;
     }
@@ -37,9 +38,12 @@
 
     update(dt, game) {
       this.age += dt;
-      if (this.homing && game && game.player && !game.player.dead) {
+      const homingTarget = this.owner === 'player'
+        ? (game && game.boss && game.boss.isHittable() ? game.boss : null)
+        : (game && game.player && !game.player.dead ? game.player : null);
+      if (this.homing && homingTarget) {
         const speed = Math.hypot(this.vx, this.vy);
-        const target = Math.atan2(game.player.y - this.y, game.player.x - this.x);
+        const target = Math.atan2(homingTarget.y - this.y, homingTarget.x - this.x);
         const a = BR.Geo.rotateToward(this.angle, target, this.homing * dt);
         this.vx = Math.cos(a) * speed;
         this.vy = Math.sin(a) * speed;
@@ -226,6 +230,19 @@
           ctx.closePath();
           ctx.fill();
           Draw.circle(ctx, this.radius * 0.6, -2, 1.8, '#2050ff');
+          break;
+        }
+        case 'orb': {
+          const rgb = this.color || '195,155,255';
+          Draw.glow(ctx, this.x, this.y, this.radius * 3, rgb, 0.85);
+          Draw.circle(ctx, this.x, this.y, this.radius, '#f3eaff', `rgb(${rgb})`, 2);
+          break;
+        }
+        case 'bomb': {
+          const pulse = 1 + 0.15 * Math.sin(time * 25);
+          Draw.glow(ctx, this.x, this.y, this.radius * 3.2 * pulse, '195,155,255', 0.95);
+          Draw.circle(ctx, this.x, this.y, this.radius, '#2a1440', '#e6d4ff', 3);
+          Draw.circle(ctx, this.x, this.y, this.radius * 0.45, '#ffffff');
           break;
         }
         case 'ice': {

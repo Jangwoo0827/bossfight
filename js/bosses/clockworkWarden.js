@@ -29,6 +29,7 @@
         { name: 'rewind', weight: 1.6, cooldown: 6, fn: this.atkRewind },
         { name: 'gears', weight: 2, cooldown: 2.6, fn: this.atkGears },
         { name: 'pendulum', weight: 1.6, cooldown: 5, phase: 2, fn: this.atkPendulum },
+        { name: 'elite', weight: 1.6, cooldown: 8, elite: true, fn: this.atkEliteMidnight },
       ];
     }
 
@@ -148,11 +149,29 @@
         const warn = this.T(0.8);
         this.chargeUp(warn, '#ffd07a');
         this.hazard({
-          shape: 'cone', x: this.x, y: this.y, angle: start, arc: 0.5, radius: 440, warn, damage: 20,
+          shape: 'cone', x: this.x, y: this.y, angle: start, arc: 0.5, radius: 340, warn, damage: 20,
           hitWindow: 1.2, linger: 0.2, spin: dir * 2.2, style: 'brass', color: '255,190,80',
         });
         yield warn + 1.2;
       }
+      yield 0.4;
+    }
+
+    // ELITE: twelve chimes around the clock, in clockwise order — stay inside or outside the dial
+    *atkEliteMidnight() {
+      this.stop();
+      this.statusText = 'MIDNIGHT';
+      this.chargeUp(1.0, '#ffd07a');
+      for (let i = 0; i < 12; i++) {
+        const a = -Math.PI / 2 + (i / 12) * Math.PI * 2;
+        const pos = Geo.clampToArena(this.x + Math.cos(a) * 230, this.y + Math.sin(a) * 230, 30);
+        this.hazard({
+          shape: 'circle', x: pos.x, y: pos.y, radius: 78, warn: 1.0 + i * 0.15, damage: 16, style: 'brass', color: '255,190,80',
+          onActivate: (h) => this.chime(h.x, h.y, 78),
+        });
+      }
+      yield 1.0 + 12 * 0.15;
+      this.statusText = '';
       yield 0.4;
     }
 

@@ -28,6 +28,7 @@
         { name: 'shockwave', weight: 1.5, cooldown: 6, fn: this.atkShockwave },
         { name: 'rockThrow', weight: 2, cooldown: 3, minRange: 250, fn: this.atkRockThrow },
         { name: 'fallingRocks', weight: 1.2, cooldown: 8, fn: this.atkFallingRocks },
+        { name: 'elite', weight: 1.6, cooldown: 8, elite: true, fn: this.atkEliteAvalanche },
       ];
     }
 
@@ -183,6 +184,38 @@
       });
       yield 1.0;
       this.statusText = '';
+    }
+
+    // ELITE: a wall of falling rocks sweeps across the arena; a 2-row gap drifts slowly
+    *atkEliteAvalanche() {
+      const A = BR.CONFIG.ARENA;
+      const rows = 5, cols = 9;
+      const rowH = (A.bottom - A.top) / rows;
+      const colW = (A.right - A.left) / cols;
+      const leftToRight = Math.random() < 0.5;
+      let gap = Geo.randInt(0, rows - 2);
+      this.arms[0].raise = this.arms[1].raise = 2;
+      this.chargeUp(0.6, '#ffd080');
+      this.statusText = 'AVALANCHE — FOLLOW THE GAP';
+      yield 0.6;
+      this.impact(this.x, this.y, 120, 'medium');
+      for (let c = 0; c < cols; c++) {
+        const col = leftToRight ? c : cols - 1 - c;
+        // the gap moves at most one row every 3 columns (0.54s) — always walkable
+        if (c > 0 && c % 3 === 0) gap = Geo.clamp(gap + (Math.random() < 0.5 ? -1 : 1), 0, rows - 2);
+        const x = A.left + colW * (col + 0.5);
+        for (let r = 0; r < rows; r++) {
+          if (r === gap || r === gap + 1) continue;
+          const y = A.top + rowH * (r + 0.5);
+          const warn = 1.0 + c * 0.18;
+          this.hazard({ shape: 'circle', x, y, radius: rowH * 0.62, warn, damage: 18, style: 'rock',
+            onActivate: r === 0 ? (h) => this.impact(h.x, h.y, 60, 'small') : null });
+          this.game.effects.push(new BR.ArcFx({ sx: x + 20, sy: y - 600, tx: x, ty: y, duration: warn, kind: 'rock', size: 14 }));
+        }
+      }
+      yield 1.0 + cols * 0.18;
+      this.statusText = '';
+      yield 0.6;
     }
 
     /* ---- drawing ---- */

@@ -27,6 +27,7 @@
         { name: 'meteor', weight: 1.6, cooldown: 5, fn: this.atkMeteor },
         { name: 'teleport', weight: (b, d) => (d < 170 ? 7 : 0.3), cooldown: 2.6, fn: this.atkTeleport },
         { name: 'flameWall', weight: 1.2, cooldown: 7.5, fn: this.atkFlameWall },
+        { name: 'elite', weight: 1.6, cooldown: 8, elite: true, fn: this.atkEliteSpiral },
       ];
     }
 
@@ -180,6 +181,26 @@
         });
       }
       yield warn * 0.7;
+    }
+
+    // ELITE: three staggered rings of slow fireballs — weave through the gaps
+    *atkEliteSpiral() {
+      this.stop();
+      this.statusText = 'INFERNO SPIRAL';
+      this.chargeUp(0.8, '#ff5a1f');
+      this.hazard({ shape: 'circle', x: this.x, y: this.y, radius: this.radius + 40, warn: 0.8, damage: 0, color: '255,140,60' });
+      yield 0.8;
+      const offset = Math.random() * Math.PI * 2;
+      for (let r = 0; r < 3; r++) {
+        for (let i = 0; i < 10; i++) {
+          const a = offset + ((i + r * 0.5) / 10) * Math.PI * 2;
+          this.shoot(a, 170, { kind: 'fireball', radius: 11, damage: 12, life: 6 });
+        }
+        this.explode(this.x, this.y, 60);
+        yield 0.55;
+      }
+      this.statusText = '';
+      yield 0.5;
     }
 
     /* ---- drawing ---- */

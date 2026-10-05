@@ -377,3 +377,14 @@ body { touch-action: none; }
 .daily-rows { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 4px; }
 .save-code { width: 760px; height: 200px; pointer-events: auto; resize: none; background: #0c0814; color: #d8d1ea; border: 1px solid rgba(255,255,255,0.15); padding: 10px; font: 12px Consolas, monospace; word-break: break-all; user-select: text; }
 .save-msg { margin-top: 8px; min-height: 18px; font-size: 13px; color: #ffd76a; }
+
+/* 4 character cards */
+.char-card { width: 268px; }
+.card-row { gap: 16px; }
+.char-card.locked { cursor: not-allowed; opacity: 0.55; filter: grayscale(0.7); align-items: center; text-align: center; justify-content: center; }
+.char-card.locked:hover { transform: none; box-shadow: none; }
+.lock-icon { font-size: 40px; margin: 18px 0; }
+
+/* Settings: more rows */
+.settings-box { gap: 11px; padding: 20px 26px; width: 520px; }
+.keybtn { min-width: 150px; }

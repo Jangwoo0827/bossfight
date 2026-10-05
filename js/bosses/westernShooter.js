@@ -33,6 +33,7 @@
         { name: 'guard', weight: (b, d) => (d < 260 ? 1.8 : 1.1), cooldown: 7.5, fn: this.atkGuard },
         { name: 'roll', weight: 1.8, cooldown: 2.5, fn: this.atkRoll },
         { name: 'highNoon', weight: 1.3, cooldown: 11, phase: 2, fn: this.atkHighNoon },
+        { name: 'elite', weight: 1.6, cooldown: 8, elite: true, fn: this.atkEliteDeadeye },
       ];
     }
 
@@ -211,6 +212,22 @@
       }
       this.statusText = '';
       yield 0.9;
+    }
+
+    // ELITE: four ricochet rounds in an X — watch where they bounce
+    *atkEliteDeadeye() {
+      this.stop();
+      const a0 = this.angleToPlayer() + Math.PI / 4;
+      const angles = [0, 1, 2, 3].map((i) => a0 + (i * Math.PI) / 2);
+      const warn = this.T(0.8);
+      for (const a of angles) this.hazard({ shape: 'line', x: this.x, y: this.y, angle: a, length: Geo.rayToArena(this.x, this.y, a, 0), width: 22, warn, damage: 0, color: '255,160,80' });
+      this.statusText = "DEAD MAN'S HAND";
+      this.chargeUp(warn, '#ffcf6a');
+      yield warn;
+      for (const a of angles) this.fire(a, 360, { kind: 'bigBullet', radius: 10, damage: 14, life: 6, bounces: 3 });
+      this.game.audio.play('crit');
+      this.statusText = '';
+      yield 0.8;
     }
 
     /* ---- drawing ---- */

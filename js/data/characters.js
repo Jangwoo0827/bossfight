@@ -75,7 +75,33 @@
         'E: Bulwark — 1초간 모든 피해 차단, 막을 때마다 PARRY',
       ],
     },
+    {
+      id: 'arcanist',
+      name: 'ARCANIST',
+      role: '유도 마법',
+      color: '#c39bff',
+      rgb: '195,155,255',
+      hpBonus: -5,
+      speedMult: 1,
+      damage: 12,
+      attack: 'orb',
+      attackCooldown: 0.3,
+      comboLength: 4,
+      charge: 'bomb',
+      e: 'blink',
+      qName: 'BOMB',
+      eName: 'BLINK',
+      unlock: { stat: 'clears', count: 1, text: '아무 난이도 1회 클리어로 해금' },
+      desc: '보스를 따라가는 마법탄. 4타째는 3발. 순간이동으로 위기를 넘긴다.',
+      skills: [
+        '좌클릭: 유도 마법탄 · 4타째 3연발',
+        'Q (꾹 눌러 충전): Arcane Bomb — 적중 시 폭발, 탄 제거',
+        'E: Blink — 조준 방향으로 순간이동, 직전 회피 시 PARRY',
+      ],
+    },
   ];
+
+  BR.isCharacterUnlocked = (c, save) => !c.unlock || ((save && save.stats && save.stats[c.unlock.stat]) || 0) >= c.unlock.count;
 
   BR.CHARACTER_BY_ID = {};
   for (const c of BR.CHARACTERS) BR.CHARACTER_BY_ID[c.id] = c;

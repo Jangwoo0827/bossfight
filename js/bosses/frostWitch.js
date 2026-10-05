@@ -29,7 +29,8 @@
         { name: 'lanes', weight: 1.6, cooldown: 6, fn: this.atkLanes },
         { name: 'nova', weight: (b, d) => (d < 200 ? 5 : 0.5), cooldown: 3, fn: this.atkNova },
         { name: 'orb', weight: 1.8, cooldown: 4, fn: this.atkOrb },
-        { name: 'shield', weight: 1.2, cooldown: 16, phase: 2, fn: this.atkCrystalShield },
+        { name: 'shield', weight: 1.2, cooldown: 16, phase: 2, fn: this.atkCrystalShield, auditSkip: 'requires breaking crystals' },
+        { name: 'elite', weight: 1.6, cooldown: 8, elite: true, fn: this.atkEliteRings },
       ];
     }
 
@@ -107,13 +108,18 @@
       const span = vertical ? A.right - A.left : A.bottom - A.top;
       const size = span / lanes;
       const warn = this.T(1.2);
-      let safe = Geo.randInt(0, lanes - 1);
+      // The first safe lane is the player's lane or a neighbour (always reachable in the warning time)
+      const pLane = Geo.clamp(Math.floor(((vertical ? this.player.x - A.left : this.player.y - A.top)) / size), 0, lanes - 1);
+      let safe = Geo.clamp(pLane + Geo.randInt(-1, 1), 0, lanes - 1);
       this.chargeUp(warn, '#bfe8ff');
       this.statusText = 'FIND THE SAFE LANE';
       for (let w = 0; w < waves; w++) {
         if (w > 0) {
           let next = safe;
-          while (next === safe) next = Geo.randInt(0, lanes - 1);
+          // Must be reachable in the 1.0s between waves: horizontal lanes are 108px (≤2 away),
+          // vertical lanes are 169px (≤1 away)
+          const reach = vertical ? 1 : 2;
+          while (next === safe) next = Geo.clamp(safe + Geo.randInt(-reach, reach), 0, lanes - 1);
           safe = next;
         }
         for (let i = 0; i < lanes; i++) {
@@ -238,6 +244,23 @@
         this.statusText = '';
         yield 0.9;
       }
+      this.statusText = '';
+    }
+
+    // ELITE: three frozen bands burst outward one after another — step inward behind them
+    *atkEliteRings() {
+      this.stop();
+      this.statusText = 'GLACIAL BLOOM';
+      const bands = [[this.radius + 20, 150], [150, 260], [260, 380]];
+      this.chargeUp(0.9, '#e0f6ff');
+      bands.forEach(([inner, outer], i) => {
+        this.hazard({
+          shape: 'ring', x: this.x, y: this.y, radius: (inner + outer) / 2, width: outer - inner,
+          warn: 0.9 + i * 0.45, damage: 18, style: 'ice', color: '150,210,255',
+          onActivate: (h) => this.shatterFx(h.x, h.y, outer),
+        });
+      });
+      yield 0.9 + 2 * 0.45 + 0.3;
       this.statusText = '';
     }
 

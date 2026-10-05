@@ -20,6 +20,8 @@
     blood: '220,20,40',
   };
 
+  BR.ACCESS = BR.ACCESS || { colorblind: false, reducedFlashes: false };
+
   class Hazard {
     /**
      * shape: circle | cone | line | ring | rect
@@ -63,6 +65,7 @@
       this.hasHit = false;
       this.dead = false;
       this.seed = Math.random() * 100;
+      if (BR.ACCESS.colorblind) this.color = this.damage > 0 ? '255,190,0' : '0,200,255';
     }
 
     get progress() {
@@ -201,7 +204,7 @@
         ctx.fillStyle = `rgba(${this.color},${visualOnly ? 0.06 : 0.09 + pulse * 0.05})`;
         ctx.fill('evenodd');
         ctx.strokeStyle = `rgba(${this.color},${visualOnly ? 0.45 : 0.55 + 0.4 * p})`;
-        ctx.lineWidth = visualOnly ? 1.5 : 2;
+        ctx.lineWidth = visualOnly ? 1.5 : BR.ACCESS.colorblind ? 3.5 : 2;
         if (visualOnly) ctx.setLineDash([10, 8]);
         ctx.stroke();
         ctx.setLineDash([]);

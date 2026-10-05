@@ -44,6 +44,7 @@ Version history: [CHANGELOG.md](CHANGELOG.md) (also in-game under **PATCH NOTES*
 |---|---|---|---|
 | BLADEMASTER | Slash + sword wave | Arc Lance (piercing, clears bullets) | Nova: burst around you. Right before a hit lands, it **PARRIES** |
 | GUNSLINGER | Rapid fire (6th shot pierces) | Rail Shot (very fast, piercing) | Smoke Roll: roll backwards + shotgun blast; a near-miss counts as a PARRY |
+| ARCANIST (unlocked by clearing once) | Homing magic orbs (4th attack = 3 orbs) | Arcane Bomb (explodes on hit, clears bullets) | Blink: teleport toward your aim; right before a hit = PARRY |
 | IRON GUARDIAN | Hammer + shockwave (3rd hit = quake) | Earthsplitter (huge wave) | Bulwark: blocks all damage for 1s; every block is a PARRY |
 
 PARRY: the incoming attack is cancelled, you heal 8 HP, gain 25 energy, and your E cooldown is halved.
@@ -121,6 +122,12 @@ Settings → Save Code → **Export** produces a code; paste it into **Import** 
 ### itch.io / share preview
 - `python tools/make_itch_zip.py` → upload `dist/bossrush-itch.zip` to itch.io as an HTML5 game (index.html at the root)
 - `python tools/make_og.py` → regenerates `og.png` (the preview card shown when the link is shared)
+
+### Automated tests
+Open `tests.html` from a local server (e.g. `python -m http.server`) or GitHub Pages.
+- Default: fights every boss with every character, a full run, save/continue, daily seed, practice, tutorial, save codes, elite attacks, key rebinding
+- `?quick=1`: one character only · `?audit=1`: forces every boss attack against a dodging bot (normal + worst case) and flags anything with more than a 25% hit rate
+- Uses its own save key, so real saves are not touched
 
 ### Releasing a new version
 Add a new entry at the top of `BR.PATCH_NOTES` in `js/data/patchNotes.js`. That becomes the game version, and players who haven't read it yet see a NEW badge on the main menu.

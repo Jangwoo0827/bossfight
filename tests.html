@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>BOSS RUSH — Tests</title>
+  <style>
+    body { background: #0b0812; color: #ddd; font: 13px Consolas, monospace; margin: 0; padding: 16px; }
+    #stage { display: none; }
+    h1 { font: 700 20px Georgia, serif; color: #fff; margin: 0 0 10px; }
+    .pass { color: #7dffa0; } .fail { color: #ff6a80; } .warn { color: #ffd76a; }
+    pre { white-space: pre-wrap; line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <h1>BOSS RUSH — automated tests</h1>
+  <div>Options: <code>?audit=1</code> (dodge audit of every attack, slow) · <code>?quick=1</code> (skip long fights)</div>
+  <pre id="out"></pre>
+  <!-- Off-screen game instance used by the tests -->
+  <div id="stage"><div id="game-wrap"><canvas id="game" width="1280" height="720"></canvas><div id="ui-root"></div></div></div>
+  <script src="tools/testHarness.js"></script>
+</body>
+</html>

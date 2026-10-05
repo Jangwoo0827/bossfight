@@ -23,6 +23,7 @@
         { name: 'pounce', weight: 2.5, cooldown: 2.6, minRange: 140, fn: this.atkPounce },
         { name: 'frenzy', weight: 1.5, cooldown: 7, fn: this.atkFrenzy },
         { name: 'howl', weight: 1.2, cooldown: 9, fn: this.atkHowl },
+        { name: 'elite', weight: 1.6, cooldown: 8, elite: true, fn: this.atkElitePack },
       ];
     }
 
@@ -119,7 +120,7 @@
         const a = this.angleToPlayer();
         this.facing = a;
         const len = Geo.rayToArena(this.x, this.y, a, this.radius);
-        const warn = i === 0 ? this.T(0.7) : 0.36;
+        const warn = i === 0 ? this.T(0.7) : 0.42;
         this.hazard({ shape: 'line', x: this.x, y: this.y, angle: a, length: len + this.radius, width: this.radius * 2 + 8, warn, damage: 0 });
         this.chargeUp(warn, '#ff5a6a');
         yield warn;
@@ -159,6 +160,34 @@
         this.shoot(a, 190, { kind: 'spirit', radius: 9, damage: 10, life: 4, homing: 1.4 });
       }
       yield 0.7;
+    }
+
+    // ELITE: spirit wolves charge through you from the edges, one after another
+    *atkElitePack() {
+      this.stop();
+      this.statusText = 'PACK HUNT';
+      this.chargeUp(0.6, '#d0e4ff');
+      this.game.audio.play('bossPhase');
+      yield 0.4;
+      const p = this.player;
+      const base = Math.random() * Math.PI * 2;
+      for (let i = 0; i < 3; i++) {
+        const ang = base + (i * Math.PI * 2) / 3;
+        const start = Geo.clampToArena(p.x + Math.cos(ang) * 320, p.y + Math.sin(ang) * 320, 30);
+        const dir = Geo.angle(start.x, start.y, p.x, p.y);
+        const len = Math.max(220, Geo.rayToArena(start.x, start.y, dir, 20));
+        this.hazard({
+          shape: 'line', x: start.x, y: start.y, angle: dir, length: len, width: 44, warn: 0.9 + i * 0.5, damage: 16, hitWindow: 0.18,
+          color: '200,220,255',
+          onActivate: (h) => {
+            const [x1, y1, x2, y2] = h.endpoints();
+            for (let k = 0; k <= 10; k++) this.game.particles.emit('magic', Geo.lerp(x1, x2, k / 10), Geo.lerp(y1, y2, k / 10), 2, { color: '200,220,255' });
+            this.game.audio.play('dash');
+          },
+        });
+      }
+      yield 0.9 + 3 * 0.5 + 0.2;
+      this.statusText = '';
     }
 
     /* ---- drawing ---- */

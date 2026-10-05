@@ -84,6 +84,9 @@
       const s = this.saveData.settings;
       this.audio.setVolume(s.volume);
       this.music.setVolume(s.musicVolume);
+      this.input.setBindings(s.keys);
+      BR.ACCESS.colorblind = !!s.colorblind;
+      BR.ACCESS.reducedFlashes = s.flashes === 'reduced';
       this.camera.intensity = s.shake;
     }
 
@@ -223,7 +226,8 @@
       this.paused = false;
       const settings = this.saveData.settings;
       const daily = opts.daily ? BR.dailyInfo() : null;
-      const character = BR.CHARACTER_BY_ID[characterId || settings.lastCharacter] || BR.CHARACTERS[0];
+      let character = BR.CHARACTER_BY_ID[characterId || settings.lastCharacter] || BR.CHARACTERS[0];
+      if (!BR.isCharacterUnlocked(character, this.saveData)) character = BR.CHARACTERS[0];
       const difficulty = daily ? BR.DIFFICULTY_BY_ID.normal
         : BR.DIFFICULTY_BY_ID[difficultyId || settings.lastDifficulty] || BR.DIFFICULTY_BY_ID.normal;
       const mods = daily ? [daily.modifier.id] : (modifierIds || settings.lastModifiers || []);
@@ -720,7 +724,7 @@
 
     spawnDamageNumber(x, y, amount, color, size) {
       if (!this.saveData.settings.damageNumbers) return;
-      this.effects.push(new BR.FloatingText(x, y, amount, { color, size }));
+      this.effects.push(new BR.FloatingText(x, y, amount, { color, size: Math.round(size * (this.saveData.settings.dmgSize || 1)) }));
     }
 
     /* ---------------- rendering ---------------- */
@@ -801,7 +805,7 @@
       if (this.hurtVignette > 0) {
         const g = ctx.createRadialGradient(C.WIDTH / 2, C.HEIGHT / 2, 260, C.WIDTH / 2, C.HEIGHT / 2, 760);
         g.addColorStop(0, 'rgba(255,0,30,0)');
-        g.addColorStop(1, `rgba(255,0,30,${0.38 * this.hurtVignette})`);
+        g.addColorStop(1, `rgba(255,0,30,${(BR.ACCESS.reducedFlashes ? 0.18 : 0.38) * this.hurtVignette})`);
         ctx.fillStyle = g;
         ctx.fillRect(0, 0, C.WIDTH, C.HEIGHT);
       }
@@ -814,7 +818,7 @@
         ctx.fillRect(0, 0, C.WIDTH, C.HEIGHT);
       }
       if (this.flash > 0) {
-        ctx.fillStyle = `rgba(${this.flashColor},${this.flash * 0.45})`;
+        ctx.fillStyle = `rgba(${this.flashColor},${this.flash * (BR.ACCESS.reducedFlashes ? 0.12 : 0.45)})`;
         ctx.fillRect(0, 0, C.WIDTH, C.HEIGHT);
       }
       if (this.slowmoTimer > 0 && this.state === 'victory') {

@@ -42,10 +42,12 @@ BR.CONFIG = {
     lance: { speed: 860, radius: [14, 26], damageMult: [2.4, 5.0], range: 950 },
     rail: { speed: 1700, radius: [6, 12], damageMult: [2.0, 5.5], range: 1200 },
     quake: { speed: 520, radius: [26, 48], damageMult: [2.5, 5.5], range: 520 },
+    bomb: { speed: 560, radius: [12, 20], damageMult: [0.6, 1.2], range: 700, blast: [90, 170], blastMult: [1.8, 4.2] },
     // E skills
     nova: { cooldown: 9, energyCost: 40, radius: 150, damageMult: 2.2, clearRadius: 230, iframes: 0.35 },
     roll: { cooldown: 5, energyCost: 25, distance: 170, duration: 0.2, iframes: 0.45, shots: 7, spread: 0.9, damageMult: 1.4 },
     bulwark: { cooldown: 8, energyCost: 35, duration: 1.0 },
+    blink: { cooldown: 4, energyCost: 25, distance: 200, iframes: 0.3 },
   },
 
   PARRY: {

@@ -42,6 +42,7 @@
               canCrit: proj.canCrit, angle: proj.angle, skill: proj.isSkill, finisher: proj.isFinisher,
               sx: proj.x - proj.vx * 0.05, sy: proj.y - proj.vy * 0.05,
             });
+            if (proj.onHit) proj.onHit(proj, g);
             if (!proj.pierce) proj.dead = true;
           }
           if (boss && !proj.dead) {
@@ -115,6 +116,7 @@
       switch (player.character.attack) {
         case 'gun': return this._gunAttack(player, angle, finisher);
         case 'hammer': return this._hammerAttack(player, angle, side, finisher);
+        case 'orb': return this._orbAttack(player, angle, finisher);
         default: return this._slashAttack(player, angle, side, finisher);
       }
     }
@@ -195,6 +197,44 @@
       g.audio.play(finisher ? 'crit' : 'shoot');
     }
 
+    _orbAttack(player, angle, finisher) {
+      const g = this.game;
+      const s = player.stats;
+      const speed = 520 * s.projectileSpeedMult;
+      const count = s.projectileCount + (finisher ? 2 : 0);
+      this._spawnPlayerProjectiles(player, angle, count, finisher ? 0.35 : 0.18, {
+        kind: 'orb', speed, radius: finisher ? 9 : 7, damage: s.damage * (finisher ? 1.2 : 1),
+        life: (600 * s.projectileRangeMult) / speed, homing: 3.2, pierce: !!s.wavePierce,
+        isFinisher: finisher, color: player.character.rgb,
+      });
+      g.particles.emit('magic', player.x + Math.cos(angle) * 18, player.y + Math.sin(angle) * 18, finisher ? 6 : 2, { angle, spread: 0.8 });
+      g.audio.play(finisher ? 'skill' : 'shoot');
+    }
+
+    // Arcane Bomb explosion (charge skill of the Arcanist)
+    arcaneBlast(player, x, y, power) {
+      const g = this.game;
+      const s = player.stats;
+      const B = SK.bomb;
+      const radius = Geo.lerp(B.blast[0], B.blast[1], power);
+      const dmg = s.damage * Geo.lerp(B.blastMult[0], B.blastMult[1], power) * s.skillDamageMult * (power >= 1 ? s.fullChargeMult : 1);
+      const boss = g.boss;
+      if (boss && boss.isHittable() && Geo.dist(x, y, boss.x, boss.y) <= radius + boss.radius) {
+        const a = Geo.angle(x, y, boss.x, boss.y);
+        this.damageBoss(dmg, boss.x - Math.cos(a) * boss.radius * 0.5, boss.y - Math.sin(a) * boss.radius * 0.5, { angle: a, skill: true, sx: x, sy: y });
+      }
+      if (boss) {
+        for (const t of boss.extraTargets) {
+          if (!t.dead && Geo.dist(x, y, t.x, t.y) <= radius + t.radius) this.damageTarget(t, dmg, t.x, t.y);
+        }
+      }
+      this._clearAround(x, y, radius);
+      g.effects.push(new BR.RingFx({ x, y, r0: 10, r1: radius, color: '195,155,255', width: 14, life: 0.35 }));
+      g.particles.emit('magic', x, y, 24, { radius: radius * 0.4, speedMult: 1.6 });
+      g.camera.shakePreset(power >= 1 ? 'medium' : 'small');
+      g.audio.play('explosion');
+    }
+
     _hammerAttack(player, angle, side, finisher) {
       const g = this.game;
       const s = player.stats;
@@ -244,6 +284,23 @@
       const def = SK[kind];
       const lerp = (pair) => Geo.lerp(pair[0], pair[1], power);
       const full = power >= 1;
+      if (kind === 'bomb') {
+        let exploded = false;
+        const boom = (p) => { if (exploded) return; exploded = true; p.dead = true; this.arcaneBlast(player, p.x, p.y, power); };
+        g.projectiles.push(new BR.Projectile({
+          owner: 'player', kind: 'bomb',
+          x: player.x + Math.cos(angle) * 20, y: player.y + Math.sin(angle) * 20,
+          angle, speed: def.speed, radius: lerp(def.radius), damage: s.damage * lerp(def.damageMult) * s.skillDamageMult,
+          life: def.range / def.speed, isSkill: true, onHit: boom, onExpire: boom,
+        }));
+        player.recoil = 2;
+        if (full) {
+          g.spawnText(player.x, player.y - 30, 'MAX!', { color: '#ffffff', size: 16, life: 0.5 });
+          g.onTutorialEvent('charge');
+        }
+        g.audio.play('skill');
+        return;
+      }
       const fullMult = full ? s.fullChargeMult : 1;
       g.projectiles.push(new BR.Projectile({
         owner: 'player', kind,
@@ -268,6 +325,7 @@
     playerESkill(player, type) {
       if (type === 'roll') return this._roll(player);
       if (type === 'bulwark') return this._bulwark(player);
+      if (type === 'blink') return this._blink(player);
       return this._nova(player);
     }
 
@@ -355,6 +413,22 @@
       g.particles.emit('dust', player.x, player.y, 16, { radius: 14 });
       g.camera.shakePreset('small');
       g.audio.play('dash');
+    }
+
+    _blink(player) {
+      const g = this.game;
+      const B = SK.blink;
+      this._tryParry(player);
+      const from = { x: player.x, y: player.y };
+      const to = Geo.clampToArena(player.x + Math.cos(player.aim) * B.distance, player.y + Math.sin(player.aim) * B.distance, player.radius);
+      g.particles.emit('magic', from.x, from.y, 16, { radius: 12 });
+      for (let i = 1; i <= 6; i++) player.afterimages.push({ x: Geo.lerp(from.x, to.x, i / 7), y: Geo.lerp(from.y, to.y, i / 7), life: 0.3 });
+      player.x = to.x;
+      player.y = to.y;
+      player.vx = player.vy = 0;
+      player.iframes = Math.max(player.iframes, B.iframes);
+      g.particles.emit('magic', to.x, to.y, 16, { radius: 12 });
+      g.audio.play('teleport');
     }
 
     _bulwark(player) {

@@ -17,6 +17,12 @@
   };
   const PAD_ATTACK = 7; // RT
 
+  // Rebindable actions -> the canonical key code the game logic listens to
+  const ACTIONS = {
+    up: 'KeyW', down: 'KeyS', left: 'KeyA', right: 'KeyD',
+    dash: 'Space', charge: 'KeyQ', skill: 'KeyE',
+  };
+
   class Input {
     constructor(canvas) {
       this.canvas = canvas;
@@ -34,13 +40,21 @@
       this.focusIndex = -1;
       this.lastDevice = 'mouse';
 
+      this.remap = new Map();
+      this.capturing = false; // true while the controls screen waits for a key
       window.addEventListener('keydown', (e) => {
-        if (!this.keys.has(e.code)) this.pressed.add(e.code);
-        this.keys.add(e.code);
-        this.lastDevice = 'keyboard';
+        if (this.capturing) return;
+        const code = this._translate(e.code);
         if (BLOCKED.has(e.code)) e.preventDefault();
+        if (!code) return;
+        if (!this.keys.has(code)) this.pressed.add(code);
+        this.keys.add(code);
+        this.lastDevice = 'keyboard';
       });
-      window.addEventListener('keyup', (e) => this.keys.delete(e.code));
+      window.addEventListener('keyup', (e) => {
+        const code = this._translate(e.code);
+        if (code) this.keys.delete(code);
+      });
       window.addEventListener('blur', () => {
         this.keys.clear();
         this.vkeys.clear();
@@ -62,6 +76,25 @@
         if (e.button === 0) this.mouse.down = false;
       });
       canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+    }
+
+    // bindings: { action: physicalCode }. Rebound default keys stop triggering their old action.
+    setBindings(bindings) {
+      this.remap.clear();
+      const custom = bindings || {};
+      const used = new Set(Object.values(custom));
+      for (const [action, canonical] of Object.entries(ACTIONS)) {
+        const key = custom[action];
+        if (key && key !== canonical) {
+          this.remap.set(key, canonical);
+          if (!used.has(canonical)) this.remap.set(canonical, null);
+        }
+      }
+      this.keys.clear();
+    }
+
+    _translate(code) {
+      return this.remap.has(code) ? this.remap.get(code) : code;
     }
 
     _updateMouse(e) {
@@ -162,5 +195,14 @@
     endFrame() { this.pressed.clear(); }
   }
 
+  BR.INPUT_ACTIONS = ACTIONS;
+  BR.keyLabel = (code) => {
+    if (!code) return '—';
+    if (code.startsWith('Key')) return code.slice(3);
+    if (code.startsWith('Digit')) return code.slice(5);
+    const names = { Space: 'SPACE', ShiftLeft: 'L-SHIFT', ShiftRight: 'R-SHIFT', ControlLeft: 'L-CTRL', AltLeft: 'L-ALT',
+      ArrowUp: '↑', ArrowDown: '↓', ArrowLeft: '←', ArrowRight: '→', Tab: 'TAB', CapsLock: 'CAPS', Enter: 'ENTER' };
+    return names[code] || code.toUpperCase();
+  };
   BR.Input = Input;
 })();

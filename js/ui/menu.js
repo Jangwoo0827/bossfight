@@ -101,13 +101,14 @@
       const esc = escapeHtml;
       const info = BR.dailyInfo();
       const best = g.saveData.stats.daily[info.date];
-      let charId = BR.CHARACTER_BY_ID[g.saveData.settings.lastCharacter] ? g.saveData.settings.lastCharacter : 'blade';
+      const lastC = BR.CHARACTER_BY_ID[g.saveData.settings.lastCharacter];
+      let charId = lastC && BR.isCharacterUnlocked(lastC, g.saveData) ? lastC.id : 'blade';
       const m = info.modifier;
       const fmt = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
       const bestText = best
         ? (best.cleared ? `CLEAR · ${fmt(best.time)}` : `BOSS ${best.stage} 처치`) + ` · ${esc((BR.CHARACTER_BY_ID[best.character] || {}).name || '')}`
         : '아직 도전 기록 없음';
-      const charBtns = BR.CHARACTERS.map((c) => `<button class="btn small" data-char="${c.id}">${esc(c.name)}</button>`).join('');
+      const charBtns = BR.CHARACTERS.filter((c) => BR.isCharacterUnlocked(c, g.saveData)).map((c) => `<button class="btn small" data-char="${c.id}">${esc(c.name)}</button>`).join('');
       const panel = UIRoot.show('dim', `
         <div class="heading">DAILY CHALLENGE</div>
         <div class="subheading">${info.date} · 오늘은 모두가 같은 보스 순서 · 같은 보상 · 같은 유물</div>
@@ -161,13 +162,14 @@
       const p = preset || g.practiceSetup || {};
       let bossId = p.bossId || BR.BOSS_DATA[0].id;
       let charId = p.characterId || g.saveData.settings.lastCharacter || 'blade';
+      if (!BR.CHARACTER_BY_ID[charId] || !BR.isCharacterUnlocked(BR.CHARACTER_BY_ID[charId], g.saveData)) charId = 'blade';
       let phase = p.phase || 1;
       const bossCards = BR.BOSS_DATA.map((b) => `
         <button class="pbtn" style="--accent:${b.color}" data-boss="${b.id}">
           <span class="pname">${esc(b.name)}</span>
           <span class="pstars">${'★'.repeat(b.difficulty)}</span>
         </button>`).join('');
-      const charBtns = BR.CHARACTERS.map((c) => `<button class="btn small" style="--accent:${c.color}" data-char="${c.id}">${esc(c.name)}</button>`).join('');
+      const charBtns = BR.CHARACTERS.filter((c) => BR.isCharacterUnlocked(c, g.saveData)).map((c) => `<button class="btn small" style="--accent:${c.color}" data-char="${c.id}">${esc(c.name)}</button>`).join('');
       const panel = UIRoot.show('dim', `
         <div class="heading">PRACTICE</div>
         <div class="subheading">원하는 보스를 원하는 페이즈부터 연습 · 기록과 SOUL은 남지 않습니다</div>
@@ -211,11 +213,21 @@
       const g = this.game;
       const s = g.saveData.settings;
       const esc = escapeHtml;
-      let charId = BR.CHARACTER_BY_ID[s.lastCharacter] ? s.lastCharacter : BR.CHARACTERS[0].id;
+      let charId = BR.CHARACTER_BY_ID[s.lastCharacter] && BR.isCharacterUnlocked(BR.CHARACTER_BY_ID[s.lastCharacter], g.saveData) ? s.lastCharacter : BR.CHARACTERS[0].id;
       let diffId = BR.DIFFICULTY_BY_ID[s.lastDifficulty] ? s.lastDifficulty : 'normal';
 
       const charCards = BR.CHARACTERS.map((c) => {
         const clears = g.saveData.stats.clearsByCharacter[c.id] || 0;
+        const locked = !BR.isCharacterUnlocked(c, g.saveData);
+        if (locked) {
+          return `
+          <div class="card char-card locked" style="--accent:${c.color}">
+            <div class="tag">${esc(c.role)}</div>
+            <div class="name">${esc(c.name)}</div>
+            <div class="lock-icon">🔒</div>
+            <div class="desc">${esc(c.unlock.text)}</div>
+          </div>`;
+        }
         return `
           <div class="card char-card" style="--accent:${c.color}" data-char="${c.id}">
             <div class="tag">${esc(c.role)}</div>
@@ -350,8 +362,17 @@
           <div class="setting"><span>Music</span><input type="range" min="0" max="100" value="${Math.round(s.musicVolume * 100)}" data-role="music"></div>
           <div class="setting"><span>Screen Shake</span><div class="seg">${shakeBtn(0, 'Off')}${shakeBtn(0.5, 'Low')}${shakeBtn(1, 'Full')}</div></div>
           <div class="setting"><span>Damage Numbers</span><div class="seg">
-            <button class="btn ${s.damageNumbers ? 'active' : ''}" data-action="dmg" data-v="1">On</button>
-            <button class="btn ${!s.damageNumbers ? 'active' : ''}" data-action="dmg" data-v="0">Off</button></div></div>
+            <button class="btn ${!s.damageNumbers ? 'active' : ''}" data-action="dmg" data-v="off">Off</button>
+            <button class="btn ${s.damageNumbers && s.dmgSize === 0.8 ? 'active' : ''}" data-action="dmg" data-v="0.8">S</button>
+            <button class="btn ${s.damageNumbers && s.dmgSize === 1 ? 'active' : ''}" data-action="dmg" data-v="1">M</button>
+            <button class="btn ${s.damageNumbers && s.dmgSize === 1.3 ? 'active' : ''}" data-action="dmg" data-v="1.3">L</button></div></div>
+          <div class="setting"><span>Flashes</span><div class="seg">
+            <button class="btn ${s.flashes !== 'reduced' ? 'active' : ''}" data-action="flash" data-v="full">Full</button>
+            <button class="btn ${s.flashes === 'reduced' ? 'active' : ''}" data-action="flash" data-v="reduced">Reduced</button></div></div>
+          <div class="setting"><span>Colorblind Telegraphs</span><div class="seg">
+            <button class="btn ${!s.colorblind ? 'active' : ''}" data-action="cb" data-v="0">Off</button>
+            <button class="btn ${s.colorblind ? 'active' : ''}" data-action="cb" data-v="1">On</button></div></div>
+          <div class="setting"><span>Controls</span><button class="btn small" data-action="controls">Rebind Keys</button></div>
           <div class="setting"><span>Save Code</span><div class="seg"><button class="btn" data-action="export">Export</button><button class="btn" data-action="import">Import</button></div></div>
           <div class="setting"><span>Save Data</span><button class="btn small" data-action="reset">Reset</button></div>
         </div>
@@ -374,7 +395,14 @@
       });
       this._bind(panel, {
         shake: (el) => { s.shake = Number(el.dataset.v); this._commitSettings(onBack); },
-        dmg: (el) => { s.damageNumbers = el.dataset.v === '1'; this._commitSettings(onBack); },
+        dmg: (el) => {
+          s.damageNumbers = el.dataset.v !== 'off';
+          if (s.damageNumbers) s.dmgSize = Number(el.dataset.v);
+          this._commitSettings(onBack);
+        },
+        flash: (el) => { s.flashes = el.dataset.v; this._commitSettings(onBack); },
+        cb: (el) => { s.colorblind = el.dataset.v === '1'; this._commitSettings(onBack); },
+        controls: () => this.showControls(() => this.showSettings(onBack)),
         export: () => this.showSaveCode('export', () => this.showSettings(onBack)),
         import: () => this.showSaveCode('import', () => this.showSettings(onBack)),
         reset: (el) => {
@@ -388,6 +416,55 @@
           }
         },
         back: () => onBack(),
+      });
+    }
+
+    // Rebind keyboard controls (ESC stays as pause/cancel)
+    showControls(onBack) {
+      const g = this.game;
+      const s = g.saveData.settings;
+      const labels = { up: 'Move Up', down: 'Move Down', left: 'Move Left', right: 'Move Right', dash: 'Dash', charge: 'Charge Skill (hold)', skill: 'E Skill / Parry' };
+      const current = (a) => (s.keys && s.keys[a]) || BR.INPUT_ACTIONS[a];
+      const rows = Object.keys(BR.INPUT_ACTIONS).map((a) => `
+        <div class="setting"><span>${labels[a]}</span><button class="btn small keybtn" data-bind="${a}">${BR.keyLabel(current(a))}</button></div>`).join('');
+      const panel = UIRoot.show('dim', `
+        <div class="heading">CONTROLS</div>
+        <div class="subheading">버튼을 누른 뒤 새 키를 누르세요 · ESC = 취소 · 방향키는 항상 이동으로 동작</div>
+        <div class="settings-box">${rows}</div>
+        <div class="btn-row" style="margin-top:18px">
+          <button class="btn" data-action="back">Back</button>
+          <button class="btn" data-action="reset">Reset Defaults</button>
+        </div>
+      `);
+      panel.querySelectorAll('[data-bind]').forEach((el) => el.addEventListener('click', () => {
+        const action = el.dataset.bind;
+        el.textContent = 'PRESS A KEY…';
+        el.classList.add('active');
+        g.input.capturing = true;
+        const onKey = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          window.removeEventListener('keydown', onKey, true);
+          g.input.capturing = false;
+          if (e.code !== 'Escape') {
+            s.keys = Object.assign({}, s.keys);
+            // a key can only do one thing: give the other action this action's old key
+            for (const other of Object.keys(BR.INPUT_ACTIONS)) {
+              if (other !== action && current(other) === e.code) s.keys[other] = current(action);
+            }
+            s.keys[action] = e.code;
+            for (const a of Object.keys(s.keys)) if (s.keys[a] === BR.INPUT_ACTIONS[a]) delete s.keys[a];
+            BR.SaveSystem.save(g.saveData);
+            g.applySettings();
+          }
+          g.audio.play('button');
+          this.showControls(onBack);
+        };
+        window.addEventListener('keydown', onKey, true);
+      }));
+      this._bind(panel, {
+        back: () => onBack(),
+        reset: () => { s.keys = {}; BR.SaveSystem.save(g.saveData); g.applySettings(); this.showControls(onBack); },
       });
     }
 

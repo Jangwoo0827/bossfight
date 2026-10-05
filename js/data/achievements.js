@@ -22,6 +22,7 @@
 
     { id: 'char_blade', icon: '/', name: 'Blade Saint', desc: 'BLADEMASTER로 클리어', progress: (s) => [s.clearsByCharacter.blade || 0, 1] },
     { id: 'char_gunner', icon: '•', name: 'Fastest Draw', desc: 'GUNSLINGER로 클리어', progress: (s) => [s.clearsByCharacter.gunner || 0, 1] },
+    { id: 'char_arcanist', icon: '✶', name: 'Archmage', desc: 'ARCANIST로 클리어', progress: (s) => [s.clearsByCharacter.arcanist || 0, 1] },
     { id: 'char_guardian', icon: '■', name: 'Unbreakable', desc: 'IRON GUARDIAN으로 클리어', progress: (s) => [s.clearsByCharacter.guardian || 0, 1] },
 
     { id: 'parry_10', icon: '✦', name: 'Riposte', desc: 'PARRY 10회', progress: (s) => [s.parries, 10] },

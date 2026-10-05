@@ -2,6 +2,24 @@
 
 The in-game version of this list is under **PATCH NOTES** on the main menu (`js/data/patchNotes.js`).
 
+## v1.6.0 — Fair Fights
+
+### FIXED
+- 전 보스 회피 가능성 점검 — 피할 수 없던 패턴 5개 수정
+- Frost Witch 얼음 길: 안전한 줄이 너무 멀리 생기던 문제 (항상 닿을 수 있는 거리로)
+- Storm Caller 내려찍기: 원을 피한 직후 고리를 피할 수 없던 문제 (고리에 빈틈 + 시차)
+- Clockwork Warden 진자: 사거리 440 → 340 (아레나 높이보다 길어 물러설 수 없던 문제)
+- Void Hunter 2페이즈 순간이동 베기: 예고 0.55초 → 0.65초
+- Dire Alpha 광란 돌진: 연속 돌진 예고 0.36초 → 0.42초
+
+### NEW
+- 4번째 캐릭터 ARCANIST — 유도 마법탄 · Arcane Bomb · Blink (아무 난이도 1회 클리어로 해금)
+- 엘리트 전용 패턴 — 중간 보스 10종마다 엘리트일 때만 쓰는 공격 1개씩
+- 키 설정 변경 (설정 → Controls)
+- 색약 모드 — 모든 위험 예고를 고대비 주황색 + 굵은 테두리로
+- 번쩍임 줄이기 · 데미지 숫자 크기(S/M/L)
+- tests.html — 모든 보스·모드·저장을 자동 검사 (?audit=1로 회피 가능성 점검)
+
 ## v1.5.1 — Golem Fix
 
 ### FIXED

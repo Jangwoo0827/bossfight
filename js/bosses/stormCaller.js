@@ -76,6 +76,7 @@
         { name: 'balls', weight: 1.5, cooldown: 6, fn: this.atkBallLightning },
         { name: 'slam', weight: (b, d) => (d < 220 ? 5 : 0), cooldown: 3, fn: this.atkThunderSlam },
         { name: 'beam', weight: 2, cooldown: 2, minRange: 160, fn: this.atkBeam },
+        { name: 'elite', weight: 1.6, cooldown: 8, elite: true, fn: this.atkEliteStorm },
       ];
     }
 
@@ -185,11 +186,15 @@
       yield warn;
       this.strikeFx(this.x, this.y, radius);
       this.game.camera.shakePreset('medium');
+      // Follow-up ring: starts a beat later from the boss and has an opening toward the player,
+      // because anyone who dashed out of the slam has no dash left for a ring right behind it.
+      yield 0.35;
       this.hazard({
-        shape: 'ring', x: this.x, y: this.y, radius, width: 26, growSpeed: 360, maxRadius: 760,
+        shape: 'ring', x: this.x, y: this.y, radius: this.radius, width: 26, growSpeed: 330, maxRadius: 760,
         warn: 0, noMinWarn: true, damage: 14, linger: 0.2, style: 'storm',
+        gapAngle: this.angleToPlayer(), gapArc: 1.2,
       });
-      yield 0.8;
+      yield 0.6;
     }
 
     *atkBeam() {
@@ -212,6 +217,30 @@
         });
       });
       yield warn + (this.empowered ? 0.45 : 0) + 0.35;
+    }
+
+    // ELITE: the whole lattice lights up — every pylon links to its neighbours and to the caller
+    *atkEliteStorm() {
+      this.stop();
+      const warn = this.T(1.3);
+      this.statusText = 'FULL STORM';
+      this.chargeUp(warn, '#ffffff');
+      const links = [];
+      const sorted = this.pylons.slice().sort((a, b) => Math.atan2(a.y - 368, a.x - 640) - Math.atan2(b.y - 368, b.x - 640));
+      for (let i = 0; i < sorted.length; i++) links.push([sorted[i], sorted[(i + 1) % sorted.length]]);
+      for (let i = 0; i < sorted.length; i += 2) links.push([{ x: this.x, y: this.y }, sorted[i]]);
+      for (const [a, b] of links) {
+        this.hazard({
+          shape: 'line', x: a.x, y: a.y, angle: Geo.angle(a.x, a.y, b.x, b.y), length: Geo.dist(a.x, a.y, b.x, b.y),
+          width: 30, warn, damage: 18, hitWindow: 0.25, linger: 0.2, style: 'storm', color: '255,220,90',
+          onActivate: () => this.game.effects.push(new LightningFx(a.x, a.y, b.x, b.y, 0.45, 4)),
+        });
+      }
+      yield warn;
+      this.game.camera.shakePreset('medium');
+      this.game.audio.play('explosion');
+      this.statusText = '';
+      yield 0.7;
     }
 
     /* ---- drawing ---- */

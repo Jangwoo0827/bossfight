@@ -26,6 +26,7 @@
         { name: 'clone', weight: 1.3, cooldown: 7, fn: this.atkClone },
         { name: 'teleportSlash', weight: 1.6, cooldown: 3.5, fn: this.atkTeleportSlash },
         { name: 'voidField', weight: 1, cooldown: 9, fn: this.atkVoidField },
+        { name: 'elite', weight: 1.6, cooldown: 8, elite: true, fn: this.atkElitePhantom },
       ];
     }
 
@@ -161,7 +162,7 @@
         yield* this.fade(0, 0.15);
         const p = this.player;
         const cx = p.x, cy = p.y;
-        const warn = this.empowered ? 0.55 : this.T(0.7);
+        const warn = this.empowered ? 0.65 : this.T(0.7);
         const radius = 100;
         this.hazard({ shape: 'circle', x: cx, y: cy, radius, warn, damage: 20, color: '200,100,255', activeColor: '170,110,255' });
         this.game.audio.play('teleport');
@@ -192,6 +193,35 @@
         });
       }
       yield 0.5;
+    }
+
+    // ELITE: four phantoms from four sides, one after another, all aimed through you
+    *atkElitePhantom() {
+      const p = this.player;
+      const base = Math.random() * Math.PI * 2;
+      this.chargeUp(0.4, '#c090ff');
+      this.statusText = 'PHANTOM BARRAGE';
+      yield 0.3;
+      for (let i = 0; i < 4; i++) {
+        const ang = base + (i * Math.PI) / 2;
+        const start = Geo.clampToArena(p.x + Math.cos(ang) * 300, p.y + Math.sin(ang) * 300, 30);
+        const dir = Geo.angle(start.x, start.y, p.x, p.y);
+        const len = Math.max(200, Geo.rayToArena(start.x, start.y, dir, 20));
+        const warn = 0.9 + i * 0.45;
+        const clone = {
+          x: start.x, y: start.y, sx: start.x, sy: start.y,
+          ex: start.x + Math.cos(dir) * len, ey: start.y + Math.sin(dir) * len,
+          angle: dir, alpha: 0, t: 0, state: 'appear', dashTime: 0.16,
+        };
+        this.clones.push(clone);
+        this.hazard({
+          shape: 'line', x: start.x, y: start.y, angle: dir, length: len, width: 40, warn, damage: 16,
+          hitWindow: clone.dashTime, color: '190,90,255', style: 'void',
+          onActivate: () => { clone.state = 'dash'; clone.t = 0; this.game.audio.play('dash'); },
+        });
+      }
+      yield 0.9 + 4 * 0.45 + 0.2;
+      this.statusText = '';
     }
 
     /* ---- drawing ---- */

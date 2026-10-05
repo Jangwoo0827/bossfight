@@ -28,6 +28,7 @@
         { name: 'tail', weight: (b, d) => (d < 240 ? 4 : 0), cooldown: 3, fn: this.atkTailSweep },
         { name: 'quicksand', weight: 1.3, cooldown: 8, fn: this.atkQuicksand },
         { name: 'fissure', weight: 1.6, cooldown: 5, phase: 2, fn: this.atkFissure },
+        { name: 'elite', weight: 1.6, cooldown: 8, elite: true, fn: this.atkEliteSandstorm },
       ];
     }
 
@@ -158,6 +159,40 @@
         });
       }
       yield 0.55 + count * 0.1;
+    }
+
+    // ELITE: two sand tornadoes cross the arena slowly — they are slower than you
+    *atkEliteSandstorm() {
+      this.stop();
+      const A = BR.CONFIG.ARENA;
+      this.statusText = 'SANDSTORM';
+      this.chargeUp(0.8, '#e8c27a');
+      const tornadoes = [];
+      for (let i = 0; i < 2; i++) {
+        const fromLeft = i === 0;
+        const y = Geo.rand(A.top + 110, A.bottom - 110);
+        const t = { x: fromLeft ? A.left + 70 : A.right - 70, y, vx: fromLeft ? 150 : -150, vy: Geo.rand(-50, 50), dead: false };
+        tornadoes.push(t);
+        this.hazard({
+          shape: 'circle', x: t.x, y: t.y, radius: 70, warn: 0.8, damage: 8, tickInterval: 0.45, hitWindow: 6.5, linger: 0.4,
+          style: 'sand', color: '255,170,80', follow: t,
+        });
+      }
+      yield 0.8;
+      let time = 0;
+      while (time < 6.5) {
+        yield 0;
+        time += this.dt;
+        for (const t of tornadoes) {
+          t.x += t.vx * this.dt;
+          t.y += t.vy * this.dt;
+          if (t.y < A.top + 70 || t.y > A.bottom - 70) t.vy *= -1;
+          if (Math.random() < 0.5) this.game.particles.emit('dust', t.x + Geo.rand(-30, 30), t.y + Geo.rand(-30, 30), 1, { speedMult: 1.5 });
+        }
+        if (time > 1.5 && this.statusText) this.statusText = '';
+      }
+      for (const t of tornadoes) t.dead = true;
+      yield 0.3;
     }
 
     /* ---- drawing ---- */

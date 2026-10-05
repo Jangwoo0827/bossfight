@@ -154,6 +154,7 @@
         if ((this.cooldowns[atk.name] || 0) > this.time) continue;
         if (d < (atk.minRange || 0) || d > (atk.maxRange ?? Infinity)) continue;
         let w = typeof atk.weight === 'function' ? atk.weight(this, d) : atk.weight;
+        if (atk.elite && !this.elite) continue;
         if (atk.name === this.lastAttack) w *= 0.3;
         if (w <= 0) continue;
         candidates.push([atk, w]);
