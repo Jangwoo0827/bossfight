@@ -2,6 +2,17 @@
 
 The in-game version of this list is under **PATCH NOTES** on the main menu (`js/data/patchNotes.js`).
 
+## v1.4.1 — Save Fixes
+
+### NEW
+- RUN 자동 저장 — 게임을 닫아도 메인 메뉴의 CONTINUE로 이어하기
+- 저장 시점: 보스전 시작 · 보상 화면 · 다음 보스 선택 (보스전 도중에 나가면 그 보스전 시작부터)
+- 일시정지에 SAVE & QUIT 추가 (ABANDON RUN은 RUN 포기)
+
+### FIXED
+- v1.3에서 추가된 SOUL 영구 강화(Precision · Focus · Resilience · Fortune · Second Thought · Head Start)가 새로고침 후 사라지던 문제
+- 메인 메뉴 PRACTICE / TUTORIAL 버튼이 칸 밖으로 삐져나오던 문제
+
 ## v1.4.0 — Practice & Polish
 
 ### NEW

@@ -342,3 +342,16 @@ body { touch-action: none; }
 .tag-fixed { background: rgba(255,77,106,0.15); color: #ff8da0; border: 1px solid rgba(255,77,106,0.45); }
 .note-sec ul { list-style: none; font-size: 13.5px; color: #d8d1ea; line-height: 1.75; }
 .note-sec li::before { content: '· '; color: #8d86a6; }
+
+/* Main menu: keep the split row inside the column */
+.btn-split .btn { min-width: 0; padding: 14px 6px; letter-spacing: 2px; }
+.continue-btn { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.continue-btn small { font-size: 11px; letter-spacing: 1px; font-weight: 600; opacity: 0.85; text-transform: none; }
+/* Compact main menu so CONTINUE + 6 buttons + hints fit in 720px */
+.title { font-size: 72px; }
+.subtitle { font-size: 18px; }
+.menu-buttons { margin-top: 24px; gap: 8px; }
+.menu-buttons .btn { padding: 11px 16px; }
+.menu-buttons .btn-split .btn { padding: 11px 6px; }
+.controls { margin-top: 16px; line-height: 1.9; }
+.menu-footer { position: static; margin-top: 8px; }

@@ -516,6 +516,7 @@
       if (p.hp <= 0) {
         if (p.stats.phoenix > 0) {
           p.stats.phoenix--;
+          if (g.run) g.run.phoenixUsed = (g.run.phoenixUsed || 0) + 1;
           p.hp = Math.round(p.stats.maxHp * 0.4);
           p.iframes = 2;
           g.showBanner('REVIVED', 'Phoenix Feather', '#ffb35e', 1.6);

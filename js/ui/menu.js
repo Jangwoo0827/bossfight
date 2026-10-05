@@ -47,7 +47,8 @@
         <div class="title">BOSS RUSH</div>
         <div class="subtitle">Five Bosses</div>
         <div class="menu-buttons">
-          <button class="btn primary" data-action="start">Start Run</button>
+          ${this._continueButton()}
+          <button class="btn ${BR.SaveSystem.loadRun() ? '' : 'primary'}" data-action="start">${BR.SaveSystem.loadRun() ? 'New Run' : 'Start Run'}</button>
           <div class="btn-split">
             <button class="btn" data-action="practice">Practice</button>
             <button class="btn" data-action="tutorial">Tutorial</button>
@@ -73,12 +74,24 @@
           else this.showRunSetup();
         },
         practice: () => this.showPractice(),
+        continue: () => g.resumeRun(),
         tutorial: () => g.startTutorial(),
         shop: () => this.showShop(),
         records: () => g.ui.records.show(() => this.showMain()),
         notes: () => this.showPatchNotes(),
         settings: () => this.showSettings(() => this.showMain()),
       });
+    }
+
+    _continueButton() {
+      const c = BR.SaveSystem.loadRun();
+      if (!c) return '';
+      const diff = BR.DIFFICULTY_BY_ID[c.difficulty];
+      const ch = BR.CHARACTER_BY_ID[c.character];
+      const total = diff ? diff.bosses : 5;
+      const where = c.phase === 'fight' && BR.BOSS_BY_ID[c.bossId] ? BR.BOSS_BY_ID[c.bossId].name : 'REWARD';
+      return `<button class="btn primary continue-btn" data-action="continue">Continue
+        <small>BOSS ${Math.min((c.stage || 0) + 1, total)}/${total} · ${escapeHtml(where)} · ${diff ? diff.name : ''}${ch ? ' · ' + escapeHtml(ch.name) : ''}</small></button>`;
     }
 
     showTutorialOffer() {
@@ -362,13 +375,15 @@
         <div class="menu-buttons" style="margin-top:10px">
           <button class="btn primary" data-action="resume">Resume</button>
           <button class="btn" data-action="settings">Settings</button>
-          <button class="btn" data-action="abandon">Abandon Run</button>
+          ${g.run && g.run.mode === 'run' ? '<button class="btn" data-action="savequit">Save &amp; Quit</button>' : ''}
+          <button class="btn" data-action="abandon">${g.run && g.run.mode === 'run' ? 'Abandon Run' : 'Quit'}</button>
         </div>
       `);
       this._bind(panel, {
         resume: () => g.setPaused(false),
         settings: () => this.showSettings(() => this.showPause()),
         abandon: () => g.abandonRun(),
+        savequit: () => g.goToMenu(),
       });
     }
   }

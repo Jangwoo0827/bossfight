@@ -233,6 +233,7 @@
       this.checkSynergies(true);
       this.saveData.stats.runs++;
       BR.SaveSystem.save(this.saveData);
+      BR.SaveSystem.clearRun();
       this.beginBoss(this.run.firstBossId());
     }
 
@@ -260,6 +261,80 @@
       this.stateTimer = 0;
       this.audio.play('bossIntro');
       this.music.play(def.arena);
+      this.checkpoint('fight', { bossId: id });
+    }
+
+    /* ---------------- RUN save / continue ---------------- */
+    checkpoint(phase, extra) {
+      const r = this.run, p = this.player;
+      if (!r || !p || r.mode !== 'run') return;
+      BR.SaveSystem.saveRun(Object.assign({
+        v: 1, phase,
+        difficulty: r.difficulty.id, character: r.character.id,
+        stage: r.stage, defeated: r.defeated.slice(),
+        upgrades: Object.assign({}, r.upgrades), upgradeOrder: r.upgradeOrder.slice(),
+        relics: r.relics.map((x) => x.id), relicOffered: Object.assign({}, r.relicOffered),
+        rerolls: r.rerolls, soulEarned: r.soulEarned, time: r.time,
+        damageDealt: r.damageDealt, damageTaken: r.damageTaken, phoenixUsed: r.phoenixUsed || 0,
+        hp: Math.round(p.hp), theme: this.theme,
+        lastSoulGain: this.lastSoulGain || 0, bossName: this.boss ? this.boss.name : (this.lastBossName || ''),
+        savedAt: Date.now(),
+      }, extra));
+    }
+
+    resumeRun() {
+      const c = BR.SaveSystem.loadRun();
+      if (!c) { this.ui.menu.showMain(); return; }
+      BR.UIRoot.clear();
+      this.paused = false;
+      this.tutorial = null;
+      const character = BR.CHARACTER_BY_ID[c.character] || BR.CHARACTERS[0];
+      const difficulty = BR.DIFFICULTY_BY_ID[c.difficulty] || BR.DIFFICULTY_BY_ID.normal;
+      const run = new BR.RunSystem(difficulty, character, this.saveData.meta);
+      this.run = run;
+      this.player = new BR.Player(this, BR.UpgradeSystem.createBaseStats(this.saveData.meta, character), character);
+      // Rebuild the build exactly: upgrades -> relics -> synergies
+      for (const id of c.upgradeOrder || []) {
+        const up = BR.UPGRADES.find((u) => u.id === id);
+        if (!up) continue;
+        for (let i = 0; i < (c.upgrades[id] || 0); i++) {
+          run.addUpgrade(up);
+          BR.UpgradeSystem.apply(this.player.stats, up, this.player);
+        }
+      }
+      for (const id of c.relics || []) {
+        const relic = BR.RELIC_BY_ID[id];
+        if (!relic) continue;
+        run.relics.push(relic);
+        relic.apply(this.player.stats, this.player, run);
+      }
+      this.checkSynergies(true);
+      run.stage = c.stage || 0;
+      run.defeated = c.defeated || [];
+      run.relicOffered = c.relicOffered || {};
+      run.rerolls = c.rerolls !== undefined ? c.rerolls : run.rerolls;
+      run.soulEarned = c.soulEarned || 0;
+      run.time = c.time || 0;
+      run.damageDealt = c.damageDealt || 0;
+      run.damageTaken = c.damageTaken || 0;
+      run.phoenixUsed = c.phoenixUsed || 0;
+      this.player.stats.phoenix = Math.max(0, this.player.stats.phoenix - run.phoenixUsed);
+      this.player.hp = Math.max(1, Math.min(this.player.stats.maxHp, c.hp || this.player.stats.maxHp));
+      this.lastSoulGain = c.lastSoulGain || 0;
+      this.lastBossName = c.bossName || '';
+      if (c.theme) this.theme = c.theme;
+
+      if (c.phase === 'fight' && BR.BOSS_BY_ID[c.bossId]) {
+        this.beginBoss(c.bossId);
+      } else if (c.phase === 'select' && c.options && c.options.length) {
+        this.boss = null;
+        this.state = 'select';
+        this.music.play('menu');
+        this.ui.bossSelect.show(c.options);
+      } else {
+        this.boss = null;
+        this.showReward();
+      }
     }
 
     /* ---------------- practice / tutorial ---------------- */
@@ -465,6 +540,7 @@
         this.showBanner('YOU DIED', '', '#ff4d6a', R.deathDelay);
         return;
       }
+      BR.SaveSystem.clearRun();
       const st = this.saveData.stats;
       st.deaths++;
       if (this.boss) st.bossDeaths[this.boss.id] = (st.bossDeaths[this.boss.id] || 0) + 1;
@@ -477,9 +553,12 @@
       this.state = 'reward';
       this.stateTimer = 0;
       this.music.play('menu');
+      if (this.boss) this.lastBossName = this.boss.name;
+      this.checkpoint('reward');
       if (this.run.shouldOfferRelic()) {
         this.ui.relic.show(this.run.rollRelics(3), (relic) => {
           this.acquireRelic(relic);
+          this.checkpoint('reward');
           this._showUpgradeChoice();
         });
         return;
@@ -489,7 +568,7 @@
 
     _showUpgradeChoice() {
       const choices = BR.RewardSystem.roll(3, this.run.upgrades);
-      this.ui.reward.show(choices, this.lastSoulGain || 0, this.boss ? this.boss.name : '');
+      this.ui.reward.show(choices, this.lastSoulGain || 0, this.boss ? this.boss.name : (this.lastBossName || ''));
     }
 
     onRewardChosen(upgrade) {
@@ -502,6 +581,7 @@
       const options = this.run.nextBossOptions();
       if (options.length > 1) {
         this.state = 'select';
+        this.checkpoint('select', { options });
         this.ui.bossSelect.show(options);
       } else {
         this.beginBoss(options[0]);
@@ -509,6 +589,7 @@
     }
 
     showResult(cleared) {
+      BR.SaveSystem.clearRun();
       const st = this.saveData.stats;
       st.totalDamage += this.run.damageDealt;
       st.damageTaken += this.run.damageTaken;
@@ -522,6 +603,7 @@
     }
 
     abandonRun() {
+      BR.SaveSystem.clearRun();
       this.paused = false;
       this.goToMenu();
     }
