@@ -54,7 +54,9 @@
       this.activeColor = o.activeColor || STYLE_ACTIVE[this.style] || STYLE_ACTIVE.default;
       this.onActivate = o.onActivate || null;
       this.follow = o.follow || null;
-      this.spin = o.spin || 0;        // rad/s rotation while active (clock hands, sweeping beams)
+      this.spin = o.spin || 0;
+      this.gapAngle = o.gapAngle || 0;
+      this.gapArc = o.gapArc || 0;     // ring only: safe opening        // rad/s rotation while active (clock hands, sweeping beams)
       this.hideWarn = !!o.hideWarn;
       this.timer = 0;
       this.state = 'warn';
@@ -122,8 +124,16 @@
           const [ax, ay, bx, by] = this.endpoints();
           return Geo.segDist(px, py, ax, ay, bx, by) <= this.width / 2 + pad;
         }
-        case 'ring':
-          return Math.abs(Geo.dist(this.x, this.y, px, py) - this.radius) <= this.width / 2 + pad;
+        case 'ring': {
+          const d = Geo.dist(this.x, this.y, px, py);
+          if (Math.abs(d - this.radius) > this.width / 2 + pad) return false;
+          if (this.gapArc > 0 && d > 0) {
+            // Inside the opening (shrunk by the player's size so the gap stays honest)
+            const half = this.gapArc / 2 - Math.asin(Math.min(1, pad / d));
+            if (Math.abs(Geo.angleDiff(this.gapAngle, Geo.angle(this.x, this.y, px, py))) < half) return false;
+          }
+          return true;
+        }
         case 'rect':
           return px + pad >= this.x && px - pad <= this.x + this.w && py + pad >= this.y && py - pad <= this.y + this.h;
         default:
@@ -159,9 +169,16 @@
         }
         case 'ring': {
           const outer = this.radius + this.width / 2, inner = Math.max(0, this.radius - this.width / 2);
-          ctx.arc(this.x, this.y, outer, 0, Math.PI * 2);
-          ctx.moveTo(this.x + inner, this.y);
-          ctx.arc(this.x, this.y, inner, 0, Math.PI * 2, true);
+          if (this.gapArc > 0) {
+            const a0 = this.gapAngle + this.gapArc / 2, a1 = this.gapAngle - this.gapArc / 2 + Math.PI * 2;
+            ctx.arc(this.x, this.y, outer, a0, a1);
+            ctx.arc(this.x, this.y, inner, a1, a0, true);
+            ctx.closePath();
+          } else {
+            ctx.arc(this.x, this.y, outer, 0, Math.PI * 2);
+            ctx.moveTo(this.x + inner, this.y);
+            ctx.arc(this.x, this.y, inner, 0, Math.PI * 2, true);
+          }
           break;
         }
         case 'rect': {

@@ -2,6 +2,15 @@
 
 The in-game version of this list is under **PATCH NOTES** on the main menu (`js/data/patchNotes.js`).
 
+## v1.5.1 — Golem Fix
+
+### FIXED
+- Stone Golem 2페이즈 충격파 2연타를 피할 수 없던 문제 — 대시 쿨다운(1.2초)보다 고리 간격(0.6초)이 짧았다
+
+### CHANGED
+- Stone Golem: 두 번째 충격파 고리에 플레이어 방향으로 빈틈이 생긴다 — 빈틈에 서 있거나 걸어가서 피한다
+- Stone Golem: 충격파 고리 간격 0.6초 → 1.0초
+
 ## v1.5.0 — Daily Hunts
 
 ### NEW

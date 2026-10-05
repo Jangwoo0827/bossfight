@@ -126,16 +126,21 @@
       for (let i = 0; i < waves; i++) {
         this.arms[0].extend = this.arms[1].extend = 1;
         this.impact(this.x, this.y, this.radius * 1.6, 'medium');
-        this.hazard({
+        // The follow-up ring has an opening toward the player: dash cooldown can't cover two rings,
+        // so the 2nd one is dodged by standing in (or walking to) the gap.
+        const gap = i > 0 ? { gapAngle: this.angleToPlayer(), gapArc: 1.15 } : {};
+        this.hazard(Object.assign({
           shape: 'ring', x: this.x, y: this.y, radius: this.radius, width: 30, growSpeed: 300, maxRadius: 1300,
           warn: 0, noMinWarn: true, damage: 20, linger: 0.2, style: 'rock',
-        });
+        }, gap));
         if (i < waves - 1) {
-          yield 0.6;
+          this.statusText = 'FIND THE GAP';
+          yield 1.0;
           this.arms[0].raise = this.arms[1].raise = 1;
         }
       }
       yield 0.9;
+      this.statusText = '';
     }
 
     *atkRockThrow() {
