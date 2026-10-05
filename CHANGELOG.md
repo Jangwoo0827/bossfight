@@ -2,6 +2,12 @@
 
 The in-game version of this list is under **PATCH NOTES** on the main menu (`js/data/patchNotes.js`).
 
+## v1.6.2 — Key Labels
+
+### CHANGED
+- HUD 스킬 원의 키 표시가 키 설정을 따라 바뀐다 (게임패드 사용 중에는 A / X / B)
+- 화면 하단 조작 안내도 바뀐 키로 표시
+
 ## v1.6.1 — Real Sound
 
 ### NEW

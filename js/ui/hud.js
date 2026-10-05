@@ -73,6 +73,17 @@
       Draw.text(ctx, valueText, x + w - 6, y + h / 2 + 1, { size: 11, align: 'right', color: '#fff', weight: '700', stroke: 'rgba(0,0,0,0.7)', strokeWidth: 3 });
     }
 
+    // Label for an action's key, following key bindings (or gamepad buttons when a pad is in use)
+    keyFor(action, short) {
+      const g = this.game;
+      if (g.input.lastDevice === 'gamepad') return { dash: 'A', charge: 'X', skill: 'B' }[action] || '';
+      const code = (g.saveData.settings.keys || {})[action] || BR.INPUT_ACTIONS[action];
+      const label = BR.keyLabel(code);
+      if (!short || label.length <= 3) return label;
+      const abbr = { SPACE: 'SPC', 'L-SHIFT': 'L⇧', 'R-SHIFT': 'R⇧', 'L-CTRL': 'LCT', 'L-ALT': 'LAL', ENTER: 'ENT', CAPS: 'CAP' };
+      return abbr[label] || label.slice(0, 3);
+    }
+
     _cooldownIcon(ctx, x, y, key, label, remaining, total, ready, extra) {
       const r = 19;
       Draw.circle(ctx, x, y, r, 'rgba(10,8,16,0.85)', ready ? '#5ee7ff' : '#4a4460', 2);
@@ -87,7 +98,7 @@
       } else if (ready) {
         Draw.glow(ctx, x, y, r * 1.6, '94,231,255', 0.25);
       }
-      Draw.text(ctx, key, x, y + 1, { size: 14, color: ready ? '#fff' : '#9a93b0', weight: '800' });
+      Draw.text(ctx, key, x, y + 1, { size: key.length <= 1 ? 14 : 12, color: ready ? '#fff' : '#9a93b0', weight: '800' });
       Draw.text(ctx, label, x, y + r + 10, { size: 9, color: '#a59fbc', spacing: 1 });
       if (extra) Draw.text(ctx, extra, x + r - 2, y - r + 4, { size: 10, color: '#ffe37a', weight: '800', stroke: '#000', strokeWidth: 3 });
     }
@@ -107,14 +118,14 @@
 
       const ix = 352, iy = 672;
       const dashReady = p.dashCooldownTimer <= 0;
-      this._cooldownIcon(ctx, ix, iy, 'SPC', dashReady ? 'DASH READY' : 'DASH', p.dashCooldownTimer, p.dashCooldown, dashReady);
+      this._cooldownIcon(ctx, ix, iy, this.keyFor('dash', true), dashReady ? 'DASH READY' : 'DASH', p.dashCooldownTimer, p.dashCooldown, dashReady);
       const ch = p.character;
       const lanceReady = p.lanceCharges > 0 && p.energy >= C.SKILLS.charge.energyCost;
       const lanceRemain = p.lanceCharges > 0 ? 0 : p.lanceRecharge;
-      this._cooldownIcon(ctx, ix + 56, iy, 'Q', p.isCharging ? `${Math.round(p.chargePower * 100)}%` : ch.qName, lanceRemain, p.lanceCooldown, lanceReady,
+      this._cooldownIcon(ctx, ix + 56, iy, this.keyFor('charge', true), p.isCharging ? `${Math.round(p.chargePower * 100)}%` : ch.qName, lanceRemain, p.lanceCooldown, lanceReady,
         s.skillCharges > 1 ? `${p.lanceCharges}` : '');
       const eReady = p.eTimer <= 0 && p.energy >= p.eSkill.energyCost;
-      this._cooldownIcon(ctx, ix + 112, iy, 'E', ch.eName, Math.max(0, p.eTimer), p.eCooldown, eReady);
+      this._cooldownIcon(ctx, ix + 112, iy, this.keyFor('skill', true), ch.eName, Math.max(0, p.eTimer), p.eCooldown, eReady);
     }
 
     _drawRunInfo(ctx) {
@@ -164,7 +175,9 @@
     _drawControls(ctx) {
       const g = this.game;
       if (g.run.stage > 0 && g.time - g.fightStartTime > 12) return;
-      Draw.text(ctx, 'WASD 이동 · 마우스 조준 · 좌클릭 공격 · SPACE 대시 · Q 충전 스킬 (꾹) · E 스킬/패리 · ESC 일시정지',
+      const k = (a) => this.keyFor(a, false);
+      const move = ['up', 'left', 'down', 'right'].map(k).join('');
+      Draw.text(ctx, `${move} 이동 · 마우스 조준 · 좌클릭 공격 · ${k('dash')} 대시 · ${k('charge')} 충전 스킬 (꾹) · ${k('skill')} 스킬/패리 · ESC 일시정지`,
         C.WIDTH / 2, 712, { size: 11, color: 'rgba(200,190,225,0.55)', spacing: 1 });
     }
   }
