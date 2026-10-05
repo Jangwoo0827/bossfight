@@ -94,7 +94,9 @@
         def.arp.forEach((f, i) => this._tone(def.wave, f, f * 1.01, def.dur * 1.6, def.vol, t + i * def.dur));
         return;
       }
-      if (def.wave && def.vol) this._tone(def.wave, def.f0, def.f1, def.dur, def.vol, t);
+      // Small random pitch variation so repeated hits don't sound identical
+      const j = 0.94 + Math.random() * 0.12;
+      if (def.wave && def.vol) this._tone(def.wave, def.f0 * j, def.f1 * j, def.dur, def.vol, t);
       if (def.noise) this._noise(def.noise, def.dur, def.filter || 3000, t);
     }
 

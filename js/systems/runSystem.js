@@ -11,6 +11,13 @@
       this.difficulty = difficulty || BR.DIFFICULTY_BY_ID.normal;
       this.character = character || BR.CHARACTERS[0];
       this.mode = 'run';           // 'run' | 'practice' | 'tutorial'
+      this.rng = Math.random;      // seeded for daily runs
+      this.seed = null;
+      this.daily = null;           // 'YYYY-MM-DD' for daily challenge runs
+      this.modifiers = [];
+      this.bossHpMod = 1;
+      this.noHeal = false;
+      this.eliteChance = R.eliteChance;
       this.enemyTimeScale = 1;     // relic: Cracked Hourglass
       this.relics = [];
       this.synergies = [];
@@ -42,7 +49,7 @@
         .map((b) => b.id)
         .filter((id) => id !== R.firstBoss && id !== R.finalBoss && !this.defeated.includes(id));
       for (let i = remaining.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
+        const j = Math.floor(this.rng() * (i + 1));
         [remaining[i], remaining[j]] = [remaining[j], remaining[i]];
       }
       const options = remaining.slice(0, R.bossChoices);
@@ -51,19 +58,19 @@
 
     // Mid-run bosses get a little tougher the later you pick them
     hpMultiplierFor(id) {
-      const d = this.difficulty.hp;
+      const d = this.difficulty.hp * this.bossHpMod;
       if (id === R.firstBoss || id === R.finalBoss) return d;
       return d * (1 + R.stageHpScale * Math.max(0, this.stage - 1));
     }
 
     damageMultiplier() { return this.difficulty.dmg; }
 
-    recordBossDefeat(id) {
+    recordBossDefeat(id, elite) {
       this.defeated.push(id);
       this.stage++;
       let soul = S.perBossBase + S.perStage * this.stage;
       if (this.isComplete) soul += S.clearBonus;
-      soul = Math.round(soul * this.difficulty.soul * this.soulMult);
+      soul = Math.round(soul * this.difficulty.soul * this.soulMult * (elite ? R.elite.soul : 1));
       this.soulEarned += soul;
       return soul;
     }
@@ -83,7 +90,7 @@
       this.relicOffered[this.stage] = true;
       const pool = this.availableRelics().slice();
       const out = [];
-      while (out.length < n && pool.length) out.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
+      while (out.length < n && pool.length) out.push(pool.splice(Math.floor(this.rng() * pool.length), 1)[0]);
       return out;
     }
 

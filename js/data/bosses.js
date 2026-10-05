@@ -149,6 +149,23 @@
     },
   ];
 
+  // One line shown under the name in each boss intro
+  const QUOTES = {
+    swordKnight: '내 맹세는 부러졌다. 그러나 칼날은 아직 남았다.',
+    infernoMage: '재가 되어라. 그것이 가장 아름다운 형태니까.',
+    stoneGolem: '…천 년을 잤다. 시끄럽군.',
+    voidHunter: '넌 이미 내 사냥감이다. 다만 아직 모를 뿐.',
+    frostWitch: '숨을 멈춰. 곧 그렇게 될 테니.',
+    stormCaller: '하늘이 내 목소리다.',
+    bloodCount: '좋은 냄새가 나는군. 조금만 마셔도 될까?',
+    westernShooter: '정오다. 뽑아.',
+    clockworkWarden: '네 시간은 이미 계산이 끝났다.',
+    duneWyrm: '(모래 아래에서 무언가가 꿈틀거린다)',
+    direAlpha: '(달을 향해 길게 울부짖는다)',
+    abyssLord: '여기까지 온 것은 칭찬하지. 하지만 심연은 바닥이 없다.',
+  };
+  for (const def of BR.BOSS_DATA) def.quote = QUOTES[def.id] || '';
+
   BR.BOSS_BY_ID = {};
   for (const def of BR.BOSS_DATA) BR.BOSS_BY_ID[def.id] = def;
 

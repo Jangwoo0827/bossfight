@@ -5,7 +5,7 @@
   const REPEAT_FALLOFF = 0.45;
 
   BR.RewardSystem = {
-    roll(count, taken) {
+    roll(count, taken, rng = Math.random) {
       const pool = BR.UPGRADES
         .filter((u) => (taken[u.id] || 0) < (u.maxStacks || 99))
         .map((u) => ({
@@ -23,7 +23,7 @@
           entry.effective = entry.weight * (sameCat >= 2 ? 0.1 : sameCat === 1 ? 0.6 : 1);
           total += entry.effective;
         }
-        let roll = Math.random() * total;
+        let roll = rng() * total;
         let index = pool.length - 1;
         for (let i = 0; i < pool.length; i++) {
           roll -= pool[i].effective;

@@ -1,3 +1,4 @@
+*.log
 .claude/
 __pycache__/
-*.log
+dist/

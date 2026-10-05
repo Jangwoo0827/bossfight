@@ -355,3 +355,25 @@ body { touch-action: none; }
 .menu-buttons .btn-split .btn { padding: 11px 6px; }
 .controls { margin-top: 16px; line-height: 1.9; }
 .menu-footer { position: static; margin-top: 8px; }
+
+/* ---------- v1.5: modifiers, daily, save code ---------- */
+.btn-split .btn { font-size: 14px; letter-spacing: 1px; padding: 11px 2px; }
+.mod-row { display: flex; flex-wrap: wrap; gap: 6px; width: 1000px; justify-content: center; margin-top: 12px; align-items: center; }
+.mod-label { font-size: 11px; letter-spacing: 3px; color: #9890b2; margin-right: 6px; }
+.mod-label b { color: #c9b6ff; letter-spacing: 1px; }
+.mod-btn {
+  pointer-events: auto; cursor: pointer; position: relative; padding: 6px 10px; font: 600 12px "Segoe UI", sans-serif; color: #cfc8e2;
+  background: rgba(20,14,32,0.9); border: 1px solid rgba(255,255,255,0.12);
+}
+.mod-btn span { color: #ff8da0; margin-right: 2px; }
+.mod-btn small { display: none; position: absolute; left: 50%; bottom: 120%; transform: translateX(-50%); white-space: nowrap; padding: 5px 8px; background: #000; border: 1px solid #555; font-size: 11px; color: #fff; z-index: 2; }
+.mod-btn:hover small { display: block; }
+.mod-btn.on { background: rgba(255,77,106,0.2); border-color: #ff6f8a; color: #fff; }
+.chip.mod { background: rgba(255,77,106,0.14); border-color: rgba(255,111,138,0.55); color: #ffc2cc; }
+.daily-box { width: 640px; display: flex; gap: 18px; padding: 18px 20px; background: rgba(20,14,32,0.9); border: 1px solid rgba(255,215,106,0.35); }
+.daily-mod { display: flex; gap: 14px; align-items: center; width: 280px; font-size: 13px; color: #cfc8e2; line-height: 1.5; }
+.daily-mod b { font: 700 18px Georgia, serif; color: #fff; }
+.dm-icon { font-size: 40px; color: #ff8da0; width: 50px; text-align: center; }
+.daily-rows { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 4px; }
+.save-code { width: 760px; height: 200px; pointer-events: auto; resize: none; background: #0c0814; color: #d8d1ea; border: 1px solid rgba(255,255,255,0.15); padding: 10px; font: 12px Consolas, monospace; word-break: break-all; user-select: text; }
+.save-msg { margin-top: 8px; min-height: 18px; font-size: 13px; color: #ffd76a; }

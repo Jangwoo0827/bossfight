@@ -8,12 +8,12 @@
       soul: 0,
       // Built from the data so newly added permanent upgrades are always kept
       meta: Object.fromEntries((BR.META_UPGRADES || []).map((m) => [m.id, 0])),
-      settings: { volume: 0.5, shake: 1, damageNumbers: true, lastCharacter: 'blade', lastDifficulty: 'normal', musicVolume: 0.35, tutorialDone: false, lastSeenVersion: '' },
+      settings: { volume: 0.5, shake: 1, damageNumbers: true, lastCharacter: 'blade', lastDifficulty: 'normal', musicVolume: 0.35, tutorialDone: false, lastSeenVersion: '', lastModifiers: [] },
       stats: {
         runs: 0, clears: 0, bestStage: 0, totalSoul: 0,
         deaths: 0, parries: 0, finishers: 0, totalDamage: 0, damageTaken: 0, playTime: 0,
         flawlessBosses: 0, fastestBoss: 0,
-        bossKills: {}, bossDeaths: {}, clearsByDifficulty: {}, clearsByCharacter: {}, bestClearTime: {}, special: {},
+        bossKills: {}, bossDeaths: {}, clearsByDifficulty: {}, clearsByCharacter: {}, bestClearTime: {}, special: {}, daily: {},
       },
       achievements: {},
     };

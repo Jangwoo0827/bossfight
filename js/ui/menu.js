@@ -45,11 +45,11 @@
       const panel = UIRoot.show('dim', `
         <div class="soul-badge">SOUL <b>${g.saveData.soul}</b></div>
         <div class="title">BOSS RUSH</div>
-        <div class="subtitle">Five Bosses</div>
         <div class="menu-buttons">
           ${this._continueButton()}
           <button class="btn ${BR.SaveSystem.loadRun() ? '' : 'primary'}" data-action="start">${BR.SaveSystem.loadRun() ? 'New Run' : 'Start Run'}</button>
           <div class="btn-split">
+            <button class="btn" data-action="daily">Daily</button>
             <button class="btn" data-action="practice">Practice</button>
             <button class="btn" data-action="tutorial">Tutorial</button>
           </div>
@@ -74,6 +74,7 @@
           else this.showRunSetup();
         },
         practice: () => this.showPractice(),
+        daily: () => this.showDaily(),
         continue: () => g.resumeRun(),
         tutorial: () => g.startTutorial(),
         shop: () => this.showShop(),
@@ -89,9 +90,48 @@
       const diff = BR.DIFFICULTY_BY_ID[c.difficulty];
       const ch = BR.CHARACTER_BY_ID[c.character];
       const total = diff ? diff.bosses : 5;
-      const where = c.phase === 'fight' && BR.BOSS_BY_ID[c.bossId] ? BR.BOSS_BY_ID[c.bossId].name : 'REWARD';
+      const where = c.phase === 'fight' && BR.BOSS_BY_ID[c.bossId] ? BR.BOSS_BY_ID[c.bossId].name : c.phase === 'select' ? 'NEXT BOSS' : 'REWARD';
       return `<button class="btn primary continue-btn" data-action="continue">Continue
-        <small>BOSS ${Math.min((c.stage || 0) + 1, total)}/${total} · ${escapeHtml(where)} · ${diff ? diff.name : ''}${ch ? ' · ' + escapeHtml(ch.name) : ''}</small></button>`;
+        <small>${c.daily ? 'DAILY · ' : ''}BOSS ${Math.min((c.stage || 0) + 1, total)}/${total} · ${escapeHtml(where)} · ${diff ? diff.name : ''}${ch ? ' · ' + escapeHtml(ch.name) : ''}</small></button>`;
+    }
+
+    // Daily challenge: same seed + modifier for everyone today
+    showDaily() {
+      const g = this.game;
+      const esc = escapeHtml;
+      const info = BR.dailyInfo();
+      const best = g.saveData.stats.daily[info.date];
+      let charId = BR.CHARACTER_BY_ID[g.saveData.settings.lastCharacter] ? g.saveData.settings.lastCharacter : 'blade';
+      const m = info.modifier;
+      const fmt = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+      const bestText = best
+        ? (best.cleared ? `CLEAR · ${fmt(best.time)}` : `BOSS ${best.stage} 처치`) + ` · ${esc((BR.CHARACTER_BY_ID[best.character] || {}).name || '')}`
+        : '아직 도전 기록 없음';
+      const charBtns = BR.CHARACTERS.map((c) => `<button class="btn small" data-char="${c.id}">${esc(c.name)}</button>`).join('');
+      const panel = UIRoot.show('dim', `
+        <div class="heading">DAILY CHALLENGE</div>
+        <div class="subheading">${info.date} · 오늘은 모두가 같은 보스 순서 · 같은 보상 · 같은 유물</div>
+        <div class="daily-box">
+          <div class="daily-mod"><span class="dm-icon">${m.icon}</span><div><b>${esc(m.name)}</b><br><span>${esc(m.desc)}</span></div></div>
+          <div class="daily-rows">
+            <div class="rec-row"><span>Difficulty</span><b>NORMAL · 보스 5연전</b></div>
+            <div class="rec-row"><span>Soul Bonus</span><b>+${Math.round(m.soul * 100)}%</b></div>
+            <div class="rec-row"><span>Today's Best</span><b>${bestText}</b></div>
+          </div>
+        </div>
+        <div class="practice-row" style="margin-top:18px"><span>CHARACTER</span><div class="seg">${charBtns}</div></div>
+        <div class="btn-row" style="margin-top:20px">
+          <button class="btn" data-action="back">Back</button>
+          <button class="btn primary" data-action="go" style="min-width:220px">Start Daily</button>
+        </div>
+      `);
+      const refresh = () => panel.querySelectorAll('[data-char]').forEach((el) => el.classList.toggle('active', el.dataset.char === charId));
+      panel.querySelectorAll('[data-char]').forEach((el) => el.addEventListener('click', () => { charId = el.dataset.char; g.audio.play('button'); refresh(); }));
+      refresh();
+      this._bind(panel, {
+        back: () => this.showMain(),
+        go: () => g.startRun(charId, 'normal', [], { daily: true }),
+      });
     }
 
     showTutorialOffer() {
@@ -202,17 +242,31 @@
         <div class="subheading">캐릭터와 난이도를 고르세요</div>
         <div class="card-row">${charCards}</div>
         <div class="diff-row">${diffButtons}</div>
-        <div class="btn-row" style="margin-top:18px">
+        <div class="mod-row">
+          <span class="mod-label">MODIFIERS <b data-role="modbonus"></b></span>
+          ${BR.MODIFIERS.map((m) => `<button class="mod-btn" data-mod="${m.id}" title="${esc(m.desc)}"><span>${m.icon}</span> ${esc(m.name)}<small>${esc(m.desc)} · +${Math.round(m.soul * 100)}%</small></button>`).join('')}
+        </div>
+        <div class="btn-row" style="margin-top:14px">
           <button class="btn" data-action="back">Back</button>
           <button class="btn primary" data-action="go" style="min-width:240px">Begin Run</button>
         </div>
       `);
+      const mods = new Set((s.lastModifiers || []).filter((id) => BR.MODIFIER_BY_ID[id]));
       const refresh = () => {
+        panel.querySelectorAll('[data-mod]').forEach((el) => el.classList.toggle('on', mods.has(el.dataset.mod)));
+        const bonus = [...mods].reduce((a, id) => a + BR.MODIFIER_BY_ID[id].soul, 0);
+        panel.querySelector('[data-role="modbonus"]').textContent = bonus ? `SOUL +${Math.round(bonus * 100)}%` : '';
         panel.querySelectorAll('[data-char]').forEach((el) => el.classList.toggle('selected', el.dataset.char === charId));
         panel.querySelectorAll('[data-diff]').forEach((el) => el.classList.toggle('selected', el.dataset.diff === diffId));
       };
       panel.querySelectorAll('[data-char]').forEach((el) => el.addEventListener('click', () => {
         charId = el.dataset.char; g.audio.play('button'); refresh();
+      }));
+      panel.querySelectorAll('[data-mod]').forEach((el) => el.addEventListener('click', () => {
+        const id = el.dataset.mod;
+        if (mods.has(id)) mods.delete(id); else mods.add(id);
+        g.audio.play('button');
+        refresh();
       }));
       panel.querySelectorAll('[data-diff]').forEach((el) => el.addEventListener('click', () => {
         diffId = el.dataset.diff; g.audio.play('button'); refresh();
@@ -220,7 +274,7 @@
       refresh();
       this._bind(panel, {
         back: () => this.showMain(),
-        go: () => g.startRun(charId, diffId),
+        go: () => g.startRun(charId, diffId, [...mods]),
       });
     }
 
@@ -298,6 +352,7 @@
           <div class="setting"><span>Damage Numbers</span><div class="seg">
             <button class="btn ${s.damageNumbers ? 'active' : ''}" data-action="dmg" data-v="1">On</button>
             <button class="btn ${!s.damageNumbers ? 'active' : ''}" data-action="dmg" data-v="0">Off</button></div></div>
+          <div class="setting"><span>Save Code</span><div class="seg"><button class="btn" data-action="export">Export</button><button class="btn" data-action="import">Import</button></div></div>
           <div class="setting"><span>Save Data</span><button class="btn small" data-action="reset">Reset</button></div>
         </div>
         <div class="btn-row" style="margin-top:24px"><button class="btn" data-action="back">Back</button></div>
@@ -320,6 +375,8 @@
       this._bind(panel, {
         shake: (el) => { s.shake = Number(el.dataset.v); this._commitSettings(onBack); },
         dmg: (el) => { s.damageNumbers = el.dataset.v === '1'; this._commitSettings(onBack); },
+        export: () => this.showSaveCode('export', () => this.showSettings(onBack)),
+        import: () => this.showSaveCode('import', () => this.showSettings(onBack)),
         reset: (el) => {
           if (el.dataset.confirm) {
             g.saveData = BR.SaveSystem.reset();
@@ -331,6 +388,55 @@
           }
         },
         back: () => onBack(),
+      });
+    }
+
+    // Move a save between devices/browsers as a copy-paste code
+    showSaveCode(mode, onBack) {
+      const g = this.game;
+      const exporting = mode === 'export';
+      let code = '';
+      if (exporting) {
+        const json = JSON.stringify({ save: g.saveData, run: BR.SaveSystem.loadRun() });
+        code = 'BR1:' + btoa(unescape(encodeURIComponent(json)));
+      }
+      const panel = UIRoot.show('dim', `
+        <div class="heading">${exporting ? 'EXPORT SAVE' : 'IMPORT SAVE'}</div>
+        <div class="subheading">${exporting ? '이 코드를 복사해서 다른 기기의 IMPORT에 붙여넣으세요' : '다른 기기에서 EXPORT한 코드를 붙여넣으세요 — 현재 저장은 덮어써집니다'}</div>
+        <textarea class="save-code" spellcheck="false" ${exporting ? 'readonly' : 'placeholder="BR1:..."'}>${code}</textarea>
+        <div class="save-msg" data-role="msg"></div>
+        <div class="btn-row" style="margin-top:12px">
+          <button class="btn" data-action="back">Back</button>
+          <button class="btn primary" data-action="${exporting ? 'copy' : 'load'}">${exporting ? 'Copy' : 'Load'}</button>
+        </div>
+      `);
+      const area = panel.querySelector('textarea');
+      const msg = panel.querySelector('[data-role="msg"]');
+      area.addEventListener('keydown', (e) => e.stopPropagation());
+      this._bind(panel, {
+        back: () => onBack(),
+        copy: () => {
+          area.select();
+          const done = () => { msg.textContent = '복사했습니다.'; };
+          if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(code).then(done, () => { document.execCommand('copy'); done(); });
+          else { document.execCommand('copy'); done(); }
+        },
+        load: () => {
+          try {
+            const raw = area.value.trim();
+            if (!raw.startsWith('BR1:')) throw new Error('format');
+            const data = JSON.parse(decodeURIComponent(escape(atob(raw.slice(4)))));
+            if (!data || typeof data.save !== 'object' || typeof data.save.soul !== 'number') throw new Error('content');
+            BR.SaveSystem.save(data.save);
+            if (data.run) BR.SaveSystem.saveRun(data.run); else BR.SaveSystem.clearRun();
+            g.saveData = BR.SaveSystem.load();
+            g.applySettings();
+            g.audio.play('reward');
+            this.showMain();
+          } catch (e) {
+            msg.textContent = '올바른 저장 코드가 아닙니다.';
+          }
+        },
       });
     }
 
@@ -351,6 +457,7 @@
       const syns = run.synergies.map((id) => BR.SYNERGIES.find((x) => x.id === id)).filter(Boolean)
         .map((x) => `<span class="chip syn">⚡ ${esc(x.name)}</span>`).join('');
       const relics = run.relics.map((r) => `<span class="chip relic">${r.icon} ${esc(r.name)}</span>`).join('');
+      const mods = run.modifiers.map((m) => `<span class="chip mod">${m.icon} ${esc(m.name)}</span>`).join('');
       const stat = (k, v) => `<div class="pstat"><b>${v}</b><span>${k}</span></div>`;
       return `
         <div class="pause-build">
@@ -362,7 +469,7 @@
             ${stat('ARMOR', `${Math.round((1 - (1 - s.damageReduction) * s.damageTakenMult) * 100)}%`)}
             ${stat('DASH CD', `${s.dashCooldown.toFixed(2)}s`)}
           </div>
-          <div class="build-chips">${relics}${syns}${ups}</div>
+          <div class="build-chips">${mods}${relics}${syns}${ups}</div>
         </div>`;
     }
 

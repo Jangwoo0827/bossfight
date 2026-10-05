@@ -8,6 +8,73 @@
     return `${m}:${String(s).padStart(2, '0')}`;
   }
 
+  // 1200x630 result card, saved as PNG (for sharing)
+  function makeShareCard(g, cleared) {
+    const D = BR.Draw;
+    const run = g.run;
+    const c = document.createElement('canvas');
+    c.width = 1200;
+    c.height = 630;
+    const x = c.getContext('2d');
+    const bg = x.createLinearGradient(0, 0, 1200, 630);
+    bg.addColorStop(0, '#120a1c');
+    bg.addColorStop(1, '#05030a');
+    x.fillStyle = bg;
+    x.fillRect(0, 0, 1200, 630);
+    x.strokeStyle = cleared ? '#ffd76a' : '#ff4d6a';
+    x.lineWidth = 4;
+    x.strokeRect(14, 14, 1172, 602);
+    D.text(x, 'BOSS RUSH', 60, 78, { size: 44, align: 'left', font: 'Georgia', weight: '700', color: '#fff' });
+    D.text(x, cleared ? 'RUN CLEAR' : 'RUN FAILED', 60, 160, { size: 72, align: 'left', font: 'Georgia', weight: '700', color: cleared ? '#ffd76a' : '#ff4d6a' });
+    const tag = `${run.daily ? `DAILY ${run.daily} · ` : ''}${run.difficulty.name} · ${run.character.name}`;
+    D.text(x, tag, 62, 220, { size: 22, align: 'left', color: run.difficulty.color, weight: '700' });
+    const stats = [
+      [`${run.stage} / ${run.totalBosses}`, 'BOSSES'],
+      [formatTime(run.time), 'TIME'],
+      [`+${run.soulEarned}`, 'SOUL'],
+      [`${Math.round(run.damageDealt).toLocaleString()}`, 'DAMAGE'],
+    ];
+    stats.forEach(([v, k], i) => {
+      const bx = 60 + i * 270;
+      x.fillStyle = 'rgba(255,255,255,0.05)';
+      x.fillRect(bx, 260, 250, 96);
+      D.text(x, v, bx + 125, 298, { size: 34, color: '#fff', weight: '800' });
+      D.text(x, k, bx + 125, 336, { size: 14, color: '#9890b2', weight: '700' });
+    });
+    const extra = [
+      ...run.modifiers.map((m) => `${m.icon} ${m.name}`),
+      ...run.relics.map((r) => `${r.icon} ${r.name}`),
+      ...run.synergies.map((id) => `⚡ ${(BR.SYNERGIES.find((s) => s.id === id) || {}).name || id}`),
+      ...run.buildSummary().map((u) => `${u.name}${u.stacks > 1 ? ` ×${u.stacks}` : ''}`),
+    ];
+    let cx = 60, cy = 392;
+    x.font = '600 17px Segoe UI, Malgun Gothic, sans-serif';
+    for (const label of extra) {
+      const w = x.measureText(label).width + 22;
+      if (cx + w > 1140) { cx = 60; cy += 40; }
+      if (cy > 520) break;
+      x.fillStyle = 'rgba(160,120,255,0.16)';
+      x.fillRect(cx, cy, w, 30);
+      D.text(x, label, cx + w / 2, cy + 16, { size: 17, color: '#e2d8ff', weight: '600' });
+      cx += w + 10;
+    }
+    D.text(x, 'jangwoo0827.github.io/bossfight', 1140, 590, { size: 18, align: 'right', color: '#8d86a6', weight: '600' });
+    return c;
+  }
+
+  function downloadCard(canvas) {
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `bossrush-${Date.now()}.png`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    });
+  }
+
   class ResultUI {
     constructor(game) {
       this.game = game;
@@ -29,7 +96,7 @@
       const reached = cleared ? run.totalBosses : Math.min(run.bossNumber, run.totalBosses);
       const panel = BR.UIRoot.show('dim', `
         <div class="result-title ${cleared ? 'clear' : 'fail'}">${cleared ? 'RUN CLEAR' : 'RUN FAILED'}</div>
-        <div class="subheading" style="margin-bottom:4px;color:${run.difficulty.color}">${run.difficulty.name} · ${esc(run.character.name)}</div>
+        <div class="subheading" style="margin-bottom:4px;color:${run.difficulty.color}">${run.daily ? `DAILY ${run.daily} · ` : ''}${run.difficulty.name} · ${esc(run.character.name)}${run.modifiers.length ? ' · ' + run.modifiers.map((m) => m.icon + ' ' + esc(m.name)).join(' ') : ''}</div>
         <div class="subheading">${cleared ? 'The Abyss falls silent.' : (killer ? `Slain by ${esc(killer.name)}${killer.hp > 0 ? ` · 남은 HP ${Math.round((killer.hp / killer.maxHp) * 100)}%` : ''}` : '')}</div>
         <div class="result-stats">
           <div class="result-stat"><div class="v">${reached} / ${run.totalBosses}</div><div class="k">Boss Reached</div></div>
@@ -42,6 +109,7 @@
         <div class="hint-line">${hint}</div>
         <div class="btn-row">
           <button class="btn primary" data-action="retry">Try Again</button>
+          <button class="btn" data-action="share">Save Image</button>
           <button class="btn" data-action="shop">Upgrades (${g.saveData.soul} Soul)</button>
           <button class="btn" data-action="menu">Main Menu</button>
         </div>
@@ -50,9 +118,10 @@
       panel.querySelectorAll('[data-action]').forEach((el) => {
         el.addEventListener('click', () => {
           g.audio.play('button');
-          this.hide();
           const action = el.dataset.action;
-          if (action === 'retry') g.startRun(run.character.id, run.difficulty.id);
+          if (action === 'share') { downloadCard(makeShareCard(g, cleared)); return; }
+          this.hide();
+          if (action === 'retry') this._retry(run);
           else if (action === 'shop') g.goToMenu('shop');
           else g.goToMenu();
         });
@@ -106,10 +175,15 @@
       }));
     }
 
+    _retry(run) {
+      this.game.startRun(run.character.id, run.difficulty.id, run.modifiers.map((m) => m.id), { daily: !!run.daily });
+    }
+
     onKey(e) {
       if (e.code === 'KeyR') {
+        const run = this.game.run;
         this.hide();
-        this.game.startRun(this.game.run.character.id, this.game.run.difficulty.id);
+        this._retry(run);
       }
     }
 
@@ -121,5 +195,6 @@
     }
   }
 
+  BR.makeShareCard = makeShareCard;
   BR.ResultUI = ResultUI;
 })();

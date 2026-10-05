@@ -341,6 +341,7 @@
       ctx.save();
       ctx.globalAlpha = alpha;
       Draw.shadow(ctx, this.x, this.y + this.radius * 0.75, this.radius * 1.15, this.radius * 0.45, 0.45);
+      if (this.elite) Draw.glow(ctx, this.x, this.y, this.radius * 2.8, '255,210,80', 0.3 + 0.12 * Math.sin(time * 5));
 
       if (this.charge) {
         const p = this.charge.time / this.charge.duration;

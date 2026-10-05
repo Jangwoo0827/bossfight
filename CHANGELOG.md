@@ -2,6 +2,22 @@
 
 The in-game version of this list is under **PATCH NOTES** on the main menu (`js/data/patchNotes.js`).
 
+## v1.5.0 — Daily Hunts
+
+### NEW
+- DAILY CHALLENGE — 매일 모두가 같은 보스 순서 · 보상 · 유물 · 변이로 도전, 오늘의 최고 기록 저장
+- 변이(Modifier) 7종 — RUN 시작 전 위험을 걸고 SOUL 보너스 획득
+- 엘리트 보스 — 12% 확률로 등장 (체력 +30%, 더 빠름, SOUL ×1.5)
+- 보스 처치 킬캠 — 마지막 일격에 줌 + 레터박스, 보스 색깔 사망 연출
+- 보스 등장 대사
+- 저장 코드 EXPORT / IMPORT — 다른 기기·브라우저로 진행 상황 옮기기
+- 결과 화면 SAVE IMAGE — 결과 카드를 이미지로 저장해 공유
+- 링크 공유 시 미리보기 카드(OG 이미지) · 파비콘
+
+### CHANGED
+- 메인 메뉴의 "FIVE BOSSES" 문구 삭제 (보스가 12종이 되었으므로)
+- 효과음에 약간의 음높이 변화를 줘 반복감 감소
+
 ## v1.4.1 — Save Fixes
 
 ### NEW

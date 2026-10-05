@@ -138,6 +138,10 @@
         this.banner.time += realDt;
         if (this.banner.time >= this.banner.duration) this.banner = null;
       }
+      if (this.killCam) {
+        this.killCam.t += realDt;
+        if (this.killCam.t > R.victoryDelay) this.killCam = null;
+      }
       if (this.toasts.length) {
         this.toasts[0].time += realDt;
         if (this.toasts[0].time >= this.toasts[0].duration) this.toasts.shift();
@@ -213,20 +217,34 @@
       else BR.UIRoot.clear();
     }
 
-    startRun(characterId, difficultyId) {
+    // opts.daily: today's daily challenge (fixed seed + daily modifier, NORMAL)
+    startRun(characterId, difficultyId, modifierIds, opts = {}) {
       BR.UIRoot.clear();
       this.paused = false;
       const settings = this.saveData.settings;
+      const daily = opts.daily ? BR.dailyInfo() : null;
       const character = BR.CHARACTER_BY_ID[characterId || settings.lastCharacter] || BR.CHARACTERS[0];
-      const difficulty = BR.DIFFICULTY_BY_ID[difficultyId || settings.lastDifficulty] || BR.DIFFICULTY_BY_ID.normal;
+      const difficulty = daily ? BR.DIFFICULTY_BY_ID.normal
+        : BR.DIFFICULTY_BY_ID[difficultyId || settings.lastDifficulty] || BR.DIFFICULTY_BY_ID.normal;
+      const mods = daily ? [daily.modifier.id] : (modifierIds || settings.lastModifiers || []);
       settings.lastCharacter = character.id;
-      settings.lastDifficulty = difficulty.id;
+      if (!daily) {
+        settings.lastDifficulty = difficulty.id;
+        settings.lastModifiers = mods.slice();
+      }
       this.run = new BR.RunSystem(difficulty, character, this.saveData.meta);
+      if (daily) {
+        this.run.daily = daily.date;
+        this.run.seed = daily.seed;
+        this.run.rng = Geo.makeRng(daily.seed);
+      }
       const stats = BR.UpgradeSystem.createBaseStats(this.saveData.meta, character);
       this.player = new BR.Player(this, stats, character);
+      this._applyModifiers(mods);
+      this.player.hp = this.player.stats.maxHp;
       // Head Start: random upgrades before the first boss
       const head = BR.UpgradeSystem.metaValue(this.saveData.meta, 'headstart');
-      for (const up of BR.RewardSystem.roll(head, this.run.upgrades)) {
+      for (const up of BR.RewardSystem.roll(head, this.run.upgrades, this.run.rng)) {
         this.run.addUpgrade(up);
         BR.UpgradeSystem.apply(this.player.stats, up, this.player);
       }
@@ -237,8 +255,19 @@
       this.beginBoss(this.run.firstBossId());
     }
 
-    beginBoss(id) {
+    _applyModifiers(ids) {
+      for (const id of ids || []) {
+        const m = BR.MODIFIER_BY_ID[id];
+        if (!m || this.run.modifiers.includes(m)) continue;
+        this.run.modifiers.push(m);
+        m.apply(this.player.stats, this.player, this.run);
+        this.run.soulMult += m.soul;
+      }
+    }
+
+    beginBoss(id, forceElite) {
       BR.UIRoot.clear();
+      this.killCam = null;
       const def = BR.BOSS_BY_ID[id];
       this.run.currentBossId = id;
       this.theme = def.arena;
@@ -254,14 +283,14 @@
 
       const A = C.ARENA;
       this.player.resetForFight((A.left + A.right) / 2, A.bottom - 110);
-      this.boss = BR.BossSystem.create(id, this, this.run);
+      this.boss = BR.BossSystem.create(id, this, this.run, forceElite);
       this.run.bossDamageTaken = 0;
       this.run.bossStartTime = this.run.time;
       this.state = 'intro';
       this.stateTimer = 0;
       this.audio.play('bossIntro');
       this.music.play(def.arena);
-      this.checkpoint('fight', { bossId: id });
+      this.checkpoint('fight', { bossId: id, elite: !!this.boss.elite });
     }
 
     /* ---------------- RUN save / continue ---------------- */
@@ -275,6 +304,8 @@
         upgrades: Object.assign({}, r.upgrades), upgradeOrder: r.upgradeOrder.slice(),
         relics: r.relics.map((x) => x.id), relicOffered: Object.assign({}, r.relicOffered),
         rerolls: r.rerolls, soulEarned: r.soulEarned, time: r.time,
+        modifiers: r.modifiers.map((m) => m.id), daily: r.daily, seed: r.seed,
+        rngState: r.rng.getState ? r.rng.getState() : null,
         damageDealt: r.damageDealt, damageTaken: r.damageTaken, phoenixUsed: r.phoenixUsed || 0,
         hp: Math.round(p.hp), theme: this.theme,
         lastSoulGain: this.lastSoulGain || 0, bossName: this.boss ? this.boss.name : (this.lastBossName || ''),
@@ -293,7 +324,13 @@
       const run = new BR.RunSystem(difficulty, character, this.saveData.meta);
       this.run = run;
       this.player = new BR.Player(this, BR.UpgradeSystem.createBaseStats(this.saveData.meta, character), character);
-      // Rebuild the build exactly: upgrades -> relics -> synergies
+      if (c.daily && c.seed !== null && c.seed !== undefined) {
+        run.daily = c.daily;
+        run.seed = c.seed;
+        run.rng = Geo.makeRng(c.seed);
+      }
+      // Rebuild the build exactly: modifiers -> upgrades -> relics -> synergies
+      this._applyModifiers(c.modifiers);
       for (const id of c.upgradeOrder || []) {
         const up = BR.UPGRADES.find((u) => u.id === id);
         if (!up) continue;
@@ -318,6 +355,7 @@
       run.damageDealt = c.damageDealt || 0;
       run.damageTaken = c.damageTaken || 0;
       run.phoenixUsed = c.phoenixUsed || 0;
+      if (run.rng.setState && c.rngState !== null && c.rngState !== undefined) run.rng.setState(c.rngState);
       this.player.stats.phoenix = Math.max(0, this.player.stats.phoenix - run.phoenixUsed);
       this.player.hp = Math.max(1, Math.min(this.player.stats.maxHp, c.hp || this.player.stats.maxHp));
       this.lastSoulGain = c.lastSoulGain || 0;
@@ -325,7 +363,7 @@
       if (c.theme) this.theme = c.theme;
 
       if (c.phase === 'fight' && BR.BOSS_BY_ID[c.bossId]) {
-        this.beginBoss(c.bossId);
+        this.beginBoss(c.bossId, c.elite);
       } else if (c.phase === 'select' && c.options && c.options.length) {
         this.boss = null;
         this.state = 'select';
@@ -345,6 +383,7 @@
       this.run = new BR.RunSystem(BR.DIFFICULTY_BY_ID.normal, character, this.saveData.meta);
       this.run.mode = mode;
       this.run.rerolls = 0;
+      this.run.eliteChance = 0;
       this.player = new BR.Player(this, BR.UpgradeSystem.createBaseStats(this.saveData.meta, character), character);
       this.beginBoss(bossId);
     }
@@ -487,9 +526,15 @@
       this.flash = 1;
       this.flashColor = '255,255,255';
       this.camera.shakePreset('big');
-      this.particles.emit('death', boss.x, boss.y, 90, { radius: boss.radius * 0.6 });
+      // Final-blow camera + boss-colored death burst
+      this.killCam = { x: boss.x, y: boss.y, t: 0 };
+      const rgb = BR.hexToRgb(boss.def.color || '#ffffff');
+      this.particles.emit('death', boss.x, boss.y, 60, { radius: boss.radius * 0.6 });
+      this.particles.emit('death', boss.x, boss.y, 50, { radius: boss.radius * 0.5, color: rgb });
       this.particles.emit('explosion', boss.x, boss.y, 40, { radius: boss.radius });
       this.effects.push(new BR.RingFx({ x: boss.x, y: boss.y, r0: boss.radius, r1: 420, color: '255,240,200', width: 16, life: 0.9 }));
+      this.effects.push(new BR.RingFx({ x: boss.x, y: boss.y, r0: boss.radius * 0.5, r1: 260, color: rgb, width: 10, life: 0.7 }));
+      this.effects.push(new BR.RingFx({ x: boss.x, y: boss.y, r0: 10, r1: 140, color: rgb, width: 6, life: 0.5 }));
       for (const h of this.hazards) h.dead = true;
       for (const p of this.projectiles) if (p.owner === 'boss') p.dead = true;
       this.audio.play('bossDeath');
@@ -499,7 +544,7 @@
       }
       if (this.player.stats.relicFang) this.player.heal(this.player.stats.maxHp * 0.3);
 
-      const soul = this.run.recordBossDefeat(boss.id);
+      const soul = this.run.recordBossDefeat(boss.id, boss.elite);
       this.lastSoulGain = soul;
       this.saveData.soul += soul;
       const st = this.saveData.stats;
@@ -520,7 +565,7 @@
       }
       this.checkAchievements();
       BR.SaveSystem.save(this.saveData);
-      this.showBanner('BOSS DEFEATED', `+${soul} SOUL`, '#ffd76a', R.victoryDelay);
+      this.showBanner(boss.elite ? 'ELITE DEFEATED' : 'BOSS DEFEATED', `+${soul} SOUL`, '#ffd76a', R.victoryDelay);
     }
 
     onPlayerDeath() {
@@ -567,7 +612,7 @@
     }
 
     _showUpgradeChoice() {
-      const choices = BR.RewardSystem.roll(3, this.run.upgrades);
+      const choices = BR.RewardSystem.roll(3, this.run.upgrades, this.run.rng);
       this.ui.reward.show(choices, this.lastSoulGain || 0, this.boss ? this.boss.name : (this.lastBossName || ''));
     }
 
@@ -577,7 +622,7 @@
       this.checkSynergies(false);
       // Recover between bosses
       const s = this.player.stats;
-      this.player.heal(s.maxHp * R.healBetweenBossesRatio + s.healAfterBoss);
+      this.player.heal((this.run.noHeal ? 0 : s.maxHp * R.healBetweenBossesRatio) + s.healAfterBoss);
       const options = this.run.nextBossOptions();
       if (options.length > 1) {
         this.state = 'select';
@@ -593,6 +638,12 @@
       const st = this.saveData.stats;
       st.totalDamage += this.run.damageDealt;
       st.damageTaken += this.run.damageTaken;
+      if (this.run.daily) {
+        // Best daily result: clears beat non-clears, then faster clear / deeper stage
+        const prev = st.daily[this.run.daily];
+        const better = !prev || (cleared ? (!prev.cleared || this.run.time < prev.time) : (!prev.cleared && this.run.stage > prev.stage));
+        if (better) st.daily[this.run.daily] = { stage: this.run.stage, cleared, time: Math.round(this.run.time), character: this.run.character.id };
+      }
       BR.SaveSystem.save(this.saveData);
       this.state = 'result';
       this.stateTimer = 0;
@@ -611,6 +662,7 @@
     goToMenu(sub) {
       this.state = 'menu';
       this.tutorial = null;
+      this.killCam = null;
       this.music.play('menu');
       this.paused = false;
       this.boss = null;
@@ -680,6 +732,18 @@
 
       ctx.save();
       ctx.translate(this.camera.offsetX, this.camera.offsetY);
+      // Kill cam: zoom toward the boss on the final blow, then ease back
+      let kz = 0;
+      if (this.killCam) {
+        const t = this.killCam.t;
+        kz = Geo.easeOut(Math.min(1, t / 0.35)) * (1 - Geo.clamp((t - 1.4) / 0.8, 0, 1));
+        const z = 1 + 0.22 * kz;
+        const fx = Geo.lerp(C.WIDTH / 2, this.killCam.x, kz * 0.85);
+        const fy = Geo.lerp(C.HEIGHT / 2, this.killCam.y, kz * 0.85);
+        ctx.translate(C.WIDTH / 2, C.HEIGHT / 2);
+        ctx.scale(z, z);
+        ctx.translate(-fx, -fy);
+      }
       this.renderer.drawArena(ctx, this.theme, this.time);
 
       for (const h of this.hazards) h.draw(ctx, this.time);
@@ -698,6 +762,11 @@
       ctx.restore();
 
       this._drawScreenEffects(ctx);
+      if (kz > 0) {
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0, 0, C.WIDTH, 56 * kz);
+        ctx.fillRect(0, C.HEIGHT - 56 * kz, C.WIDTH, 56 * kz);
+      }
       if (this.player && this.run && this.state !== 'menu') this.hud.draw(ctx, dt);
       if (this.tutorial && this.state === 'fight') this._drawTutorial(ctx);
       if (this.state === 'intro') this._drawIntro(ctx);
@@ -782,6 +851,11 @@
       Draw.text(ctx, boss.def.title, C.WIDTH / 2 - slide, cy + 52, { size: 20, font: 'Georgia', color: '#d8cfe8', spacing: 4, weight: '400' });
       const stars = '★'.repeat(boss.def.difficulty) + '☆'.repeat(5 - boss.def.difficulty);
       Draw.text(ctx, stars, C.WIDTH / 2, cy + 88, { size: 18, color: '#ffcf4a', spacing: 4 });
+      if (boss.elite) Draw.text(ctx, 'ELITE · 체력 +30% · 더 빠름 · SOUL ×1.5', C.WIDTH / 2, cy - 92, { size: 13, color: '#ffd76a', weight: '800' });
+      if (boss.def.quote) {
+        ctx.globalAlpha = a * Geo.clamp((t - 0.5) / 0.4, 0, 1);
+        Draw.text(ctx, `“${boss.def.quote}”`, C.WIDTH / 2, cy + 124, { size: 16, font: 'Georgia', color: '#bfb6d6', weight: '400' });
+      }
       ctx.restore();
     }
 

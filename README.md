@@ -1,4 +1,4 @@
-# BOSS RUSH RPG — Five Bosses
+# BOSS RUSH
 
 A 2D action roguelike with no regular enemies: **boss → reward → stronger build → harder boss → retry**.
 It uses only HTML5, CSS and Vanilla JS with Canvas 2D. There are no external libraries, no build step and no image files.
@@ -31,6 +31,7 @@ Version history: [CHANGELOG.md](CHANGELOG.md) (also in-game under **PATCH NOTES*
 ## Modes
 - **START RUN**: the main game (character + difficulty select)
 - **PRACTICE**: fight any boss starting from any phase. No records or SOUL.
+- **DAILY**: today's challenge. Everyone gets the same boss order, rewards, relics and modifier, and your best result for the day is recorded.
 - **TUTORIAL**: learn movement, attacks, dashing, dodging, charging and PARRY against a training dummy in about 2 minutes. It is offered automatically before your first run.
 
 ## Controller / Mobile
@@ -66,6 +67,8 @@ PARRY: the incoming attack is cancelled, you heal 8 HP, gain 25 energy, and your
 - Special upgrades: Glass Cannon, Phoenix Feather (one revive), Aegis (a barrier per fight), lifesteal and thorns.
 - **Relics**: choose 1 of 3 after the 1st boss and right before the final boss. They change the rules of the run (8 kinds: slow down boss time, burning, projectile reflection, ...).
 - **Synergies**: owning two specific upgrades unlocks an evolved effect automatically (8 kinds). Reward cards show a "⚡ SYNERGY" hint when picking them would complete one.
+- **Modifiers** (7 kinds): optional handicaps chosen before a run (faster bosses, less HP, no healing...). Each adds a SOUL bonus.
+- **Elite bosses**: 12% chance (HP +30%, faster, SOUL x1.5)
 - **SOUL** is earned per boss and kept after death. Spend it on 10 kinds of permanent upgrades in `UPGRADES` on the main menu (stats, more SOUL, reward rerolls, Head Start).
 
 ## How each boss is beaten
@@ -111,6 +114,13 @@ js/ui/                  canvas HUD + DOM overlays (menu, reward, boss select, re
 
 ### Music
 `js/core/music.js` generates background music procedurally with WebAudio (no files). Each arena gets its own key, scale and tempo, and the music gets more intense in later boss phases. Music and sound-effect volume are adjusted separately in Settings.
+
+### Moving saves between devices
+Settings → Save Code → **Export** produces a code; paste it into **Import** on another device or browser.
+
+### itch.io / share preview
+- `python tools/make_itch_zip.py` → upload `dist/bossrush-itch.zip` to itch.io as an HTML5 game (index.html at the root)
+- `python tools/make_og.py` → regenerates `og.png` (the preview card shown when the link is shared)
 
 ### Releasing a new version
 Add a new entry at the top of `BR.PATCH_NOTES` in `js/data/patchNotes.js`. That becomes the game version, and players who haven't read it yet see a NEW badge on the main menu.
