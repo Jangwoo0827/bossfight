@@ -25,7 +25,33 @@
     nova:       { wave: 'sine', f0: 900, f1: 180, dur: 0.3, vol: 0.12, noise: 0.12, filter: 3000 },
     teleport:   { wave: 'sine', f0: 300, f1: 1500, dur: 0.18, vol: 0.06 },
     death:      { wave: 'sawtooth', f0: 300, f1: 40, dur: 1.0, vol: 0.18, noise: 0.15, filter: 900 },
+    parry:      { arp: [784, 1046, 1568], wave: 'triangle', dur: 0.08, vol: 0.09 },
     clear:      { arp: [392, 523, 659, 784, 1046, 1318], wave: 'triangle', dur: 0.13, vol: 0.09 },
+  };
+
+  /*
+   * Sound files (Kenney, CC0 — see sounds/LICENSE-kenney.txt). Several variants per event are
+   * picked at random. If a file can't be loaded/decoded (file://, old Safari without ogg), the
+   * synthesized SYNTH sound above is used instead, so the game never goes silent.
+   */
+  const SAMPLES = {
+    attack: { n: 3, vol: 0.45 },
+    swing: { n: 2, vol: 0.5 },
+    hit: { n: 3, vol: 0.5 },
+    bossHit: { n: 3, vol: 0.45 },
+    crit: { n: 2, vol: 0.6 },
+    dash: { n: 3, vol: 0.55 },
+    playerHurt: { n: 2, vol: 0.8 },
+    explosion: { n: 3, vol: 0.6 },
+    parry: { n: 2, vol: 0.55 },
+    nova: { n: 2, vol: 0.45 },
+    teleport: { n: 2, vol: 0.35 },
+    death: { n: 1, vol: 0.8 },
+    bossDeath: { n: 2, vol: 0.8 },
+    button: { n: 2, vol: 0.4 },
+    reward: { n: 2, vol: 0.45 },
+    clear: { n: 1, vol: 0.5 },
+    telegraph: { n: 1, vol: 0.25 },
   };
 
   class AudioManager {
@@ -34,7 +60,9 @@
       this.master = null;
       this.noiseBuffer = null;
       this.volume = 0.5;
-      this.files = new Map(); // name -> HTMLAudioElement
+      this.files = new Map(); // name -> HTMLAudioElement (manual register)
+      this.buffers = new Map(); // name -> AudioBuffer[] (decoded SAMPLES)
+      this.samplesRequested = false;
       this.lastPlayed = new Map();
       const unlock = () => this.unlock();
       window.addEventListener('pointerdown', unlock);
@@ -56,9 +84,41 @@
           for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
         }
         if (this.ctx.state === 'suspended') this.ctx.resume();
+        this._loadSamples();
       } catch (e) {
         this.ctx = null;
       }
+    }
+
+    _loadSamples() {
+      if (this.samplesRequested || !this.ctx || location.protocol === 'file:') return;
+      this.samplesRequested = true;
+      for (const [name, def] of Object.entries(SAMPLES)) {
+        for (let i = 1; i <= def.n; i++) {
+          fetch(`sounds/${name}_${i}.ogg`)
+            .then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(r.status))))
+            .then((data) => this.ctx.decodeAudioData(data))
+            .then((buffer) => {
+              if (!this.buffers.has(name)) this.buffers.set(name, []);
+              this.buffers.get(name).push(buffer);
+            })
+            .catch(() => { /* keep the synth fallback for this sound */ });
+        }
+      }
+    }
+
+    _playSample(name) {
+      const list = this.buffers.get(name);
+      if (!list || !list.length || !this.ctx || this.ctx.state !== 'running') return false;
+      const src = this.ctx.createBufferSource();
+      src.buffer = list[Math.floor(Math.random() * list.length)];
+      src.playbackRate.value = 0.94 + Math.random() * 0.12;
+      const gain = this.ctx.createGain();
+      gain.gain.value = SAMPLES[name].vol;
+      src.connect(gain);
+      gain.connect(this.master);
+      src.start();
+      return true;
     }
 
     register(name, url) {
@@ -87,6 +147,7 @@
         return;
       }
       if (!this.ctx || this.ctx.state !== 'running') return;
+      if (this._playSample(name)) return;
       const def = SYNTH[name];
       if (!def) return;
       const t = this.ctx.currentTime;

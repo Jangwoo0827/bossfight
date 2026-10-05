@@ -362,7 +362,7 @@
       g.hitstop = Math.max(g.hitstop, 0.12);
       g.flash = Math.max(g.flash, 0.25);
       g.flashColor = '200,255,255';
-      g.audio.play('reward');
+      g.audio.play('parry');
       g.recordStat('parries', 1);
       g.onTutorialEvent('parry');
       if (player.stats.relicBattery && player.lanceCharges < player.stats.skillCharges) player.lanceCharges++;

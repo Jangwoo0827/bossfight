@@ -74,7 +74,7 @@
     if (ph < 1) inp.keys.add('KeyQ');
     if (Math.random() < 0.02) inp.pressed.add('Space');
     if (Math.random() < 0.012) inp.pressed.add('KeyE');
-    if (g.player.hp < 30) g.player.hp = g.player.stats.maxHp;
+    g.player.hp = g.player.stats.maxHp; // god mode: these tests check flow, not survival
   }
 
   function killBoss() {

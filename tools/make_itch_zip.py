@@ -5,7 +5,7 @@ root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 out_dir = os.path.join(root, 'dist')
 os.makedirs(out_dir, exist_ok=True)
 out = os.path.join(out_dir, 'bossrush-itch.zip')
-include = ['index.html', 'style.css', 'favicon.svg', 'og.png', 'js']
+include = ['index.html', 'style.css', 'favicon.svg', 'og.png', 'js', 'sounds']
 with zipfile.ZipFile(out, 'w', zipfile.ZIP_DEFLATED) as z:
     for item in include:
         path = os.path.join(root, item)

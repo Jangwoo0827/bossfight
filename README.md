@@ -135,8 +135,11 @@ Add a new entry at the top of `BR.PATCH_NOTES` in `js/data/patchNotes.js`. That 
 ### Cache
 After an update, raise the `?v=N` number on the script/CSS tags in `index.html` so browsers (and GitHub Pages) load the new files.
 
+### Credits
+Sound effects: [Kenney](https://kenney.nl) — Impact Sounds, RPG Audio, Interface Sounds (CC0, see `sounds/LICENSE-kenney.txt`). Background music is generated in code.
+
 ### Sound
-`AudioManager` uses synthesized WebAudio sounds when there are no audio files.
+`AudioManager` plays the files in `sounds/` (several variants per event, picked at random). It falls back to synthesized WebAudio sounds for any file it can't load (e.g. when opened via file://).
 To use real files, call `game.audio.register('hit', 'sounds/hit.wav')`. Registered files take priority.
 Sound keys: `attack, hit, dash, bossHit, bossPhase, bossDeath, reward, button, ...`
 

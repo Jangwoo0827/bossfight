@@ -4,6 +4,20 @@
 
   BR.PATCH_NOTES = [
     {
+      version: '1.6.1',
+      title: 'Real Sound',
+      sections: [
+        ['NEW', [
+          '실제 효과음 36종 — 타격 · 베기 · 대시 · 폭발 · 피격 · 버튼 등 (Kenney, CC0)',
+          'PARRY 전용 효과음 (종소리)',
+          '같은 소리도 변형과 음높이를 바꿔가며 재생해 반복감 감소',
+        ]],
+        ['CHANGED', [
+          '파일을 불러올 수 없는 환경(file:// 실행, 구형 Safari)에서는 기존 합성 효과음으로 자동 대체',
+        ]],
+      ],
+    },
+    {
       version: '1.6.0',
       title: 'Fair Fights',
       sections: [
