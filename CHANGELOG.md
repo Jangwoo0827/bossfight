@@ -2,6 +2,12 @@
 
 The in-game version of this list is under **PATCH NOTES** on the main menu (`js/data/patchNotes.js`).
 
+## v1.7.1 — Shop Fix
+
+### FIXED
+- SOUL 상점에서 업그레이드가 많아 BACK 버튼이 화면 밖으로 잘리던 문제 — 목록이 스크롤되고 BACK은 항상 보인다
+- 구매 후에도 스크롤 위치 유지
+
 ## v1.7.0 — Deeper Roots
 
 ### NEW

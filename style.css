@@ -395,3 +395,9 @@ body { touch-action: none; }
 .shop-grid .shop-item .name { font-size: 16px; }
 .shop-grid .shop-item .desc { font-size: 12px; margin: 3px 0 7px; min-height: 30px; }
 .shop-grid .shop-item .pip { width: 18px; }
+/* SOUL shop: the list scrolls inside a fixed height so BACK is always on screen */
+.shop-grid { max-height: 440px; overflow-y: auto; overflow-x: hidden; padding-right: 6px; align-content: start; }
+.shop-grid::-webkit-scrollbar { width: 8px; }
+.shop-grid::-webkit-scrollbar-thumb { background: rgba(185,150,255,0.45); }
+.shop-grid::-webkit-scrollbar-track { background: rgba(255,255,255,0.04); }
+.shop-note { margin-top: 12px; }

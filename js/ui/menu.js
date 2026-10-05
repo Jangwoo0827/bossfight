@@ -336,8 +336,12 @@
         <div class="subheading">영구 강화 — 작지만 죽어도 유지된다</div>
         <div class="shop-grid">${items}</div>
         <div class="shop-note">SOUL은 보스를 처치할 때마다 획득하며, RUN이 실패해도 사라지지 않는다.</div>
-        <div class="btn-row" style="margin-top:22px"><button class="btn" data-action="back">Back</button></div>
+        <div class="btn-row" style="margin-top:14px"><button class="btn" data-action="back">Back</button></div>
       `);
+      // keep the scroll position when the shop re-renders after a purchase
+      const grid = panel.querySelector('.shop-grid');
+      if (grid && this._shopScroll) grid.scrollTop = this._shopScroll;
+      if (grid) grid.addEventListener('scroll', () => { this._shopScroll = grid.scrollTop; });
       this._bind(panel, {
         buy: (el) => {
           if (BR.UpgradeSystem.buyMeta(g.saveData, el.dataset.id)) {
