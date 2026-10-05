@@ -32,7 +32,7 @@ Version history: [CHANGELOG.md](CHANGELOG.md) (also in-game under **PATCH NOTES*
 - **START RUN**: the main game (character + difficulty select)
 - **PRACTICE**: fight any boss starting from any phase. No records or SOUL.
 - **DAILY**: today's challenge. Everyone gets the same boss order, rewards, relics and modifier, and your best result for the day is recorded.
-- **BOSS RUSH**: all 12 bosses in a row, no upgrades and no permanent upgrades. A pure-skill time attack with its own leaderboard.
+- **BOSS RUSH**: all 15 bosses in a row, no upgrades and no permanent upgrades. A pure-skill time attack with its own leaderboard.
 - **TUTORIAL**: learn movement, attacks, dashing, dodging, charging and PARRY against a training dummy in about 2 minutes. It is offered automatically before your first run.
 
 ## Install as an app (PWA)

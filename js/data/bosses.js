@@ -136,6 +136,21 @@
       tip: '도약 중에는 맞지 않는다 — 그림자를 보고 착지 지점에서 벗어나라. 벽에 튕기는 광란 돌진이 끝나면 어지러워서 빈틈이 생긴다.',
     },
     {
+      id: 'broodMother', name: 'BROOD MOTHER', title: 'Queen of the Hive', hp: 1150, radius: 40, difficulty: 4,
+      arena: 'hive', color: '#8cff5a', phaseThresholds: [0.5],
+      tip: '새끼가 3마리 이상 살아 있으면 본체가 받는 피해 절반(초록 보호막). 새끼부터 정리하라 — 2페이즈에는 새끼가 죽으면 터진다.',
+    },
+    {
+      id: 'phantomLancer', name: 'PHANTOM LANCER', title: 'The Unbroken Charge', hp: 1100, radius: 24, difficulty: 5,
+      arena: 'spire', color: '#dfe8ff', phaseThresholds: [0.5],
+      tip: '돌진이 지나간 자리에 잠시 창의 잔상 벽이 남는다. 구석에 몰리지 말고 넓은 공간을 확보하라.',
+    },
+    {
+      id: 'gravitySage', name: 'GRAVITY SAGE', title: 'Keeper of the Fall', hp: 1200, radius: 30, difficulty: 4,
+      arena: 'cosmos', color: '#7890ff', phaseThresholds: [0.5],
+      tip: '중력 우물은 너를 끌어당긴다 — 달리면 벗어날 수 있다(대시는 끌림 무시). COLLAPSE가 뜨면 즉시 멀어져라.',
+    },
+    {
       id: 'abyssLord',
       name: 'ABYSS LORD',
       title: 'Sovereign of the Deep',
@@ -163,6 +178,9 @@
     duneWyrm: '(모래 아래에서 무언가가 꿈틀거린다)',
     direAlpha: '(달을 향해 길게 울부짖는다)',
     abyssLord: '여기까지 온 것은 칭찬하지. 하지만 심연은 바닥이 없다.',
+    broodMother: '내 아이들이 배가 고프단다.',
+    phantomLancer: '멈추는 법은 배우지 못했다.',
+    gravitySage: '모든 것은 결국 떨어진다. 너도.',
   };
   for (const def of BR.BOSS_DATA) def.quote = QUOTES[def.id] || '';
 

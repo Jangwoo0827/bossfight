@@ -349,6 +349,10 @@
     }
 
     showShop() {
+      this.game.ui.tree.show(() => this.showMain());
+    }
+
+    showShopList() {
       const g = this.game;
       const items = BR.META_UPGRADES.map((def) => {
         const level = g.saveData.meta[def.id] || 0;

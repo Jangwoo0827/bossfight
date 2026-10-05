@@ -4,6 +4,17 @@
 
   BR.PATCH_NOTES = [
     {
+      version: '1.9.0',
+      title: 'Constellations',
+      sections: [
+        ['NEW', [
+          'SOUL TREE — 영구 강화가 별자리 모양 스킬 트리로 (77노드 · 5갈래, 가지를 따라 해금). 기존 강화는 그대로 반영',
+          '보스 3종 추가 (총 15종) — BROOD MOTHER(잡몹 소환) · PHANTOM LANCER(돌진 + 잔상 벽) · GRAVITY SAGE(중력 우물)',
+          '새 보스 전용 엘리트 패턴 · 아레나 · 배경음악',
+        ]],
+      ],
+    },
+    {
       version: '1.8.1',
       title: 'Riposte',
       sections: [

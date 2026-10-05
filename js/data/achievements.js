@@ -13,7 +13,7 @@
     { id: 'first_blood', icon: '⚔', name: 'First Blood', desc: '보스 1마리 처치', progress: (s) => [sum(s.bossKills), 1] },
     { id: 'slayer', icon: '☠', name: 'Slayer', desc: '보스 25마리 처치', progress: (s) => [sum(s.bossKills), 25] },
     { id: 'legend', icon: '♛', name: 'Living Legend', desc: '보스 100마리 처치', progress: (s) => [sum(s.bossKills), 100] },
-    { id: 'collector', icon: '◈', name: 'Bestiary', desc: '12종류의 보스를 모두 처치', progress: (s) => [count(s.bossKills), 12] },
+    { id: 'collector', icon: '◈', name: 'Bestiary', desc: '모든 종류의 보스를 처치', progress: (s) => [count(s.bossKills), BR.BOSS_DATA.length] },
 
     { id: 'clear_easy', icon: 'Ⅰ', name: 'Warm Up', desc: 'EASY 클리어', progress: (s) => [s.clearsByDifficulty.easy || 0, 1] },
     { id: 'clear_normal', icon: 'Ⅱ', name: 'Boss Rusher', desc: 'NORMAL 클리어', progress: (s) => [s.clearsByDifficulty.normal || 0, 1] },

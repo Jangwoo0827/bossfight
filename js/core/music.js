@@ -27,6 +27,9 @@
     clock:   { bpm: 124, root: 56, scale: 'minor', drums: true, lead: 'triangle' },
     dune:    { bpm: 112, root: 50, scale: 'harmonic', drums: true, lead: 'triangle' },
     forest:  { bpm: 128, root: 54, scale: 'minor', drums: true, lead: 'sine' },
+    hive:    { bpm: 120, root: 49, scale: 'phrygian', drums: true, lead: 'square' },
+    spire:   { bpm: 152, root: 57, scale: 'dorian', drums: true, lead: 'triangle' },
+    cosmos:  { bpm: 104, root: 46, scale: 'minor', drums: true, lead: 'sine' },
     abyss:   { bpm: 156, root: 47, scale: 'harmonic', drums: true, lead: 'sawtooth' },
   };
 

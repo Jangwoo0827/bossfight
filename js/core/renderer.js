@@ -48,6 +48,18 @@
       label: 'Moonlit Glade', bg: '#040806', floorA: '#18241a', floorB: '#152017', grout: 'rgba(0,0,0,0.3)',
       wall: '#2a3a2a', wallGlow: '170,210,255', accent: '#bcd8ff', ambient: 'voidMote', ambientRate: 4, tile: 72, rocks: true,
     },
+    hive: {
+      label: 'Brood Hive', bg: '#060a04', floorA: '#1b2414', floorB: '#171f10', grout: 'rgba(0,0,0,0.35)',
+      wall: '#34452a', wallGlow: '150,255,90', accent: '#8cff5a', ambient: 'heal', ambientRate: 4, tile: 64, lava: true, lavaRgb: '120,220,60',
+    },
+    spire: {
+      label: 'Silver Spire', bg: '#07080c', floorA: '#22252c', floorB: '#1e2128', grout: 'rgba(200,220,255,0.06)',
+      wall: '#4a5060', wallGlow: '200,220,255', accent: '#dfe8ff', ambient: 'staticMote', ambientRate: 5, tile: 80,
+    },
+    cosmos: {
+      label: 'Event Horizon', bg: '#02020a', floorA: '#0d0d1c', floorB: '#0b0b18', grout: 'rgba(120,140,255,0.05)',
+      wall: '#232048', wallGlow: '120,140,255', accent: '#7890ff', ambient: 'voidMote', ambientRate: 8, tile: 64, grid: true, gridRgb: '120,140,255',
+    },
     blood: {
       label: 'Crimson Hall', bg: '#0c0304', floorA: '#251015', floorB: '#200d11', grout: 'rgba(0,0,0,0.45)',
       wall: '#4a1218', wallGlow: '255,40,50', accent: '#ff3a4a', ambient: 'bloodMote', ambientRate: 8, tile: 60, lava: true, lavaRgb: '200,20,40',

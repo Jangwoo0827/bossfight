@@ -103,6 +103,28 @@
       apply: (s) => { s.phoenix += 1; } },
   ];
 
+  // SOUL TREE shape (see js/ui/treeUI.js): groups radiate from the centre, chains branch off chains
+  BR.META_TREE = [
+    { stat: 'might', group: 'offense' },
+    { stat: 'precision', group: 'offense', parent: 'might', at: 1, turn: -0.7 },
+    { stat: 'lethality', group: 'offense', parent: 'precision', at: 2, turn: 0.6 },
+    { stat: 'memory', group: 'offense', parent: 'might', at: 3, turn: 0.7 },
+    { stat: 'focus', group: 'skill' },
+    { stat: 'quickcast', group: 'skill', parent: 'focus', at: 1, turn: -0.7 },
+    { stat: 'instinct', group: 'skill', parent: 'focus', at: 3, turn: 0.7 },
+    { stat: 'fortune', group: 'fortune' },
+    { stat: 'luck', group: 'fortune', parent: 'fortune', at: 1, turn: 0.7 },
+    { stat: 'reroll', group: 'fortune', parent: 'fortune', at: 3, turn: -0.6 },
+    { stat: 'headstart', group: 'fortune', parent: 'luck', at: 4, turn: 0.5 },
+    { stat: 'relichunter', group: 'fortune', parent: 'reroll', at: 2, turn: -0.5 },
+    { stat: 'vitality', group: 'defense' },
+    { stat: 'resilience', group: 'defense', parent: 'vitality', at: 1, turn: 0.7 },
+    { stat: 'breath', group: 'defense', parent: 'vitality', at: 3, turn: -0.7 },
+    { stat: 'guardian', group: 'defense', parent: 'resilience', at: 4, turn: 0.5 },
+    { stat: 'swiftness', group: 'mobility' },
+    { stat: 'reflex', group: 'mobility', parent: 'swiftness', at: 2, turn: 0.7 },
+  ];
+
   BR.CATEGORY_LABELS = {
     attack: 'ATTACK',
     survival: 'SURVIVAL',

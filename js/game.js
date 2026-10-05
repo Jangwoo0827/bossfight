@@ -40,6 +40,7 @@
         bossSelect: new BR.BossSelectUI(this),
         result: new BR.ResultUI(this),
         relic: new BR.RelicUI(this),
+        tree: new BR.TreeUI(this),
       };
       this.touch = new BR.TouchUI(this);
       this.tutorial = null;
