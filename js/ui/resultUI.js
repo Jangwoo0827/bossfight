@@ -60,6 +60,52 @@
       window.addEventListener('keydown', this.onKey);
     }
 
+    showPractice(cleared) {
+      const g = this.game;
+      const setup = g.practiceSetup || {};
+      const def = BR.BOSS_BY_ID[setup.bossId];
+      const boss = g.boss;
+      const panel = BR.UIRoot.show('dim', `
+        <div class="result-title ${cleared ? 'clear' : 'fail'}" style="font-size:56px">${cleared ? 'PRACTICE CLEAR' : 'PRACTICE OVER'}</div>
+        <div class="subheading">${def ? BR.escapeHtml(def.name) : ''} · Phase ${setup.phase || 1}부터 · ${formatTime(g.run.time)}${!cleared && boss ? ` · 남은 HP ${Math.round((boss.hp / boss.maxHp) * 100)}%` : ''}</div>
+        <div class="hint-line">${def ? BR.escapeHtml(def.tip) : ''}</div>
+        <div class="btn-row">
+          <button class="btn primary" data-action="retry">Retry (R)</button>
+          <button class="btn" data-action="pick">Choose Boss</button>
+          <button class="btn" data-action="menu">Main Menu</button>
+        </div>
+      `);
+      const retry = () => { this.hide(); g.startPractice(setup.bossId, setup.characterId, setup.phase); };
+      this._practiceKey = (e) => { if (e.code === 'KeyR') retry(); };
+      window.addEventListener('keydown', this._practiceKey);
+      panel.querySelectorAll('[data-action]').forEach((el) => el.addEventListener('click', () => {
+        g.audio.play('button');
+        const a = el.dataset.action;
+        if (a === 'retry') return retry();
+        this.hide();
+        if (a === 'pick') { g.goToMenu(); g.ui.menu.showPractice(setup); } else g.goToMenu();
+      }));
+    }
+
+    showTutorialDone() {
+      const g = this.game;
+      const panel = BR.UIRoot.show('dim', `
+        <div class="result-title clear" style="font-size:56px">READY TO HUNT</div>
+        <div class="subheading">기본기를 모두 익혔다. 이제 진짜 보스가 기다린다.</div>
+        <div class="hint-line">팁: 빨간 영역의 채워지는 속도 = 남은 시간 · 보스가 휘두른 직후가 반격 타이밍 · PARRY는 회복도 된다</div>
+        <div class="btn-row">
+          <button class="btn primary" data-action="run">Start Run</button>
+          <button class="btn" data-action="menu">Main Menu</button>
+        </div>
+      `);
+      panel.querySelectorAll('[data-action]').forEach((el) => el.addEventListener('click', () => {
+        g.audio.play('button');
+        this.hide();
+        g.goToMenu();
+        if (el.dataset.action === 'run') g.ui.menu.showRunSetup();
+      }));
+    }
+
     onKey(e) {
       if (e.code === 'KeyR') {
         this.hide();
@@ -69,6 +115,8 @@
 
     hide() {
       window.removeEventListener('keydown', this.onKey);
+      if (this._practiceKey) window.removeEventListener('keydown', this._practiceKey);
+      this._practiceKey = null;
       BR.UIRoot.clear();
     }
   }

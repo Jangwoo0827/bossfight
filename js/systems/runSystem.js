@@ -10,6 +10,11 @@
       this.rerolls = BR.UpgradeSystem.metaValue(meta, 'reroll');
       this.difficulty = difficulty || BR.DIFFICULTY_BY_ID.normal;
       this.character = character || BR.CHARACTERS[0];
+      this.mode = 'run';           // 'run' | 'practice' | 'tutorial'
+      this.enemyTimeScale = 1;     // relic: Cracked Hourglass
+      this.relics = [];
+      this.synergies = [];
+      this.relicOffered = {};
       this.stage = 0;              // bosses defeated so far
       this.bossDamageTaken = 0;    // reset each fight (flawless tracking)
       this.bossStartTime = 0;
@@ -61,6 +66,25 @@
       soul = Math.round(soul * this.difficulty.soul * this.soulMult);
       this.soulEarned += soul;
       return soul;
+    }
+
+    // Relics are offered after the 1st boss and right before the final boss
+    shouldOfferRelic() {
+      if (this.mode !== 'run' || this.isComplete) return false;
+      if (this.stage !== 1 && this.stage !== this.totalBosses - 1) return false;
+      return !this.relicOffered[this.stage] && this.availableRelics().length > 0;
+    }
+
+    availableRelics() {
+      return BR.RELICS.filter((r) => !this.relics.includes(r));
+    }
+
+    rollRelics(n) {
+      this.relicOffered[this.stage] = true;
+      const pool = this.availableRelics().slice();
+      const out = [];
+      while (out.length < n && pool.length) out.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
+      return out;
     }
 
     addUpgrade(upgrade) {

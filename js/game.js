@@ -8,6 +8,17 @@
   const C = BR.CONFIG;
   const R = C.RUN;
 
+
+  // Tutorial steps: event = what counts as progress, mode = what the dummy does
+  const TUTORIAL = [
+    { text: 'WASD (또는 왼쪽 스틱)로 이동하세요', event: 'move', goal: 3 },
+    { text: '좌클릭을 꾹 눌러 허수아비를 공격하세요 — 마지막 타격은 강한 피니셔', event: 'finisher', goal: 2 },
+    { text: 'SPACE로 대시하세요 — 대시 중에는 무적입니다', event: 'dash', goal: 3 },
+    { text: '빨간 영역이 꽉 차기 전에 빠져나가세요', event: 'dodge', goal: 3, mode: 'dodge' },
+    { text: 'Q를 꾹 눌러 끝까지 충전한 뒤 떼세요', event: 'charge', goal: 1 },
+    { text: '공격이 닿기 직전(영역이 거의 찼을 때) E → PARRY!', event: 'parry', goal: 2, mode: 'parry' },
+  ];
+
   class Game {
     constructor(canvas) {
       this.canvas = canvas;
@@ -16,6 +27,7 @@
       this.camera = new BR.Camera();
       this.particles = new BR.ParticleSystem(C.PARTICLE_LIMIT);
       this.audio = new BR.AudioManager();
+      this.music = new BR.MusicManager(this.audio);
       this.renderer = new BR.Renderer();
       this.combat = new BR.CombatSystem(this);
       this.hud = new BR.HUD(this);
@@ -27,7 +39,10 @@
         reward: new BR.RewardUI(this),
         bossSelect: new BR.BossSelectUI(this),
         result: new BR.ResultUI(this),
+        relic: new BR.RelicUI(this),
       };
+      this.touch = new BR.TouchUI(this);
+      this.tutorial = null;
 
       this.state = 'menu';
       this.paused = false;
@@ -60,6 +75,7 @@
 
     start() {
       this.ui.menu.showMain();
+      this.music.play('menu');
       this.lastTime = performance.now();
       requestAnimationFrame(this._loop);
     }
@@ -67,6 +83,7 @@
     applySettings() {
       const s = this.saveData.settings;
       this.audio.setVolume(s.volume);
+      this.music.setVolume(s.musicVolume);
       this.camera.intensity = s.shake;
     }
 
@@ -83,6 +100,10 @@
     }
 
     update(realDt) {
+      this.input.pollGamepad();
+      this.music.update();
+      if (this.touch) this.touch.update();
+      if (this.boss && this.state === 'fight') this.music.intensity = this.boss.phase;
       if (this.input.wasPressed('Escape') && (this.state === 'fight' || this.state === 'intro')) {
         this.setPaused(!this.paused);
       }
@@ -127,9 +148,11 @@
     updateWorld(dt) {
       const controlled = this.state === 'intro' || this.state === 'fight' || this.state === 'victory';
       if (this.player) this.player.update(dt, this.input, controlled);
-      if (this.boss) this.boss.update(dt);
-      for (const p of this.projectiles) p.update(dt, this);
-      for (const h of this.hazards) h.update(dt, this);
+      // Boss-side time can be slowed (Cracked Hourglass relic)
+      const edt = dt * (this.run ? this.run.enemyTimeScale : 1);
+      if (this.boss) this.boss.update(edt);
+      for (const p of this.projectiles) p.update(p.owner === 'boss' ? edt : dt, this);
+      for (const h of this.hazards) h.update(edt, this);
       this.combat.update(dt);
       for (const e of this.effects) e.update(dt, this);
       Geo.compact(this.projectiles);
@@ -138,8 +161,9 @@
       this.particles.update(dt);
       if (this.run && this.state === 'fight') {
         this.run.time += dt;
-        this.saveData.stats.playTime += dt;
+        if (this.run.mode === 'run') this.saveData.stats.playTime += dt;
       }
+      if (this.tutorial && this.state === 'fight') this._updateTutorial(dt);
     }
 
     updateState() {
@@ -154,12 +178,16 @@
           break;
         case 'victory':
           if (this.stateTimer >= R.victoryDelay) {
-            if (this.run.isComplete) this.showResult(true);
+            if (this.run.mode === 'practice') this.showPracticeResult(true);
+            else if (this.run.isComplete) this.showResult(true);
             else this.showReward();
           }
           break;
         case 'dying':
-          if (this.stateTimer >= R.deathDelay) this.showResult(false);
+          if (this.stateTimer >= R.deathDelay) {
+            if (this.run.mode === 'practice') this.showPracticeResult(false);
+            else this.showResult(false);
+          }
           break;
         default:
           break;
@@ -202,6 +230,7 @@
         this.run.addUpgrade(up);
         BR.UpgradeSystem.apply(this.player.stats, up, this.player);
       }
+      this.checkSynergies(true);
       this.saveData.stats.runs++;
       BR.SaveSystem.save(this.saveData);
       this.beginBoss(this.run.firstBossId());
@@ -230,6 +259,136 @@
       this.state = 'intro';
       this.stateTimer = 0;
       this.audio.play('bossIntro');
+      this.music.play(def.arena);
+    }
+
+    /* ---------------- practice / tutorial ---------------- */
+    _startSpecial(mode, bossId, characterId) {
+      BR.UIRoot.clear();
+      this.paused = false;
+      const character = BR.CHARACTER_BY_ID[characterId] || BR.CHARACTER_BY_ID[this.saveData.settings.lastCharacter] || BR.CHARACTERS[0];
+      this.run = new BR.RunSystem(BR.DIFFICULTY_BY_ID.normal, character, this.saveData.meta);
+      this.run.mode = mode;
+      this.run.rerolls = 0;
+      this.player = new BR.Player(this, BR.UpgradeSystem.createBaseStats(this.saveData.meta, character), character);
+      this.beginBoss(bossId);
+    }
+
+    startPractice(bossId, characterId, phase) {
+      this.tutorial = null;
+      this.practiceSetup = { bossId, characterId, phase };
+      this._startSpecial('practice', bossId, characterId);
+      // Start at a later phase: drop HP to the threshold, the transition plays on activation
+      if (phase > 1 && this.boss.phaseThresholds[phase - 2] !== undefined) {
+        this.boss.hp = Math.floor(this.boss.maxHp * this.boss.phaseThresholds[phase - 2]);
+        this.boss.displayHp = this.boss.hp;
+      }
+    }
+
+    startTutorial(characterId) {
+      this.tutorial = { step: 0, count: 0, moved: 0, lastX: 0, lastY: 0, done: false, doneTimer: 0 };
+      this._startSpecial('tutorial', 'trainingDummy', characterId);
+      this.tutorial.lastX = this.player.x;
+      this.tutorial.lastY = this.player.y;
+    }
+
+    tutorialMode() {
+      if (!this.tutorial || this.tutorial.done) return null;
+      const step = TUTORIAL[this.tutorial.step];
+      return step ? step.mode || null : null;
+    }
+
+    onTutorialEvent(type) {
+      const t = this.tutorial;
+      if (!t || t.done || !this.run || this.run.mode !== 'tutorial') return;
+      const step = TUTORIAL[t.step];
+      if (step && step.event === type) t.count++;
+    }
+
+    _updateTutorial(dt) {
+      const t = this.tutorial;
+      const p = this.player;
+      p.energy = C.PLAYER.maxEnergy;
+      p.lanceCharges = p.stats.skillCharges;
+      if (t.done) {
+        t.doneTimer += dt;
+        if (t.doneTimer > 2.2) {
+          this.tutorial = null;
+          this.state = 'result';
+          this.music.play('menu');
+          this.ui.result.showTutorialDone();
+        }
+        return;
+      }
+      const step = TUTORIAL[t.step];
+      if (step.event === 'move') {
+        t.moved += BR.Geo.dist(t.lastX, t.lastY, p.x, p.y);
+        t.count = Math.floor(t.moved / 160);
+      }
+      t.lastX = p.x;
+      t.lastY = p.y;
+      if (t.count >= step.goal) {
+        t.step++;
+        t.count = 0;
+        this.audio.play('reward');
+        this.spawnText(p.x, p.y - 34, 'GOOD!', { color: '#7dffa0', size: 20 });
+        for (const h of this.hazards) h.dead = true;
+        if (t.step >= TUTORIAL.length) {
+          t.done = true;
+          this.saveData.settings.tutorialDone = true;
+          BR.SaveSystem.save(this.saveData);
+          this.showBanner('TUTORIAL COMPLETE', '이제 진짜 보스를 상대할 차례', '#7dffa0', 2.2);
+        }
+      }
+    }
+
+    _drawTutorial(ctx) {
+      const t = this.tutorial;
+      if (!t || t.done) return;
+      const step = TUTORIAL[t.step];
+      const w = 620, h = 64, x = (C.WIDTH - w) / 2, y = 104;
+      ctx.save();
+      ctx.fillStyle = 'rgba(8,6,14,0.85)';
+      ctx.fillRect(x, y, w, h);
+      ctx.strokeStyle = 'rgba(125,255,160,0.5)';
+      ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
+      Draw.text(ctx, `STEP ${t.step + 1} / ${TUTORIAL.length}`, x + 14, y + 16, { size: 11, align: 'left', color: '#7dffa0', weight: '800' });
+      Draw.text(ctx, `${Math.min(t.count, step.goal)} / ${step.goal}`, x + w - 14, y + 16, { size: 12, align: 'right', color: '#fff', weight: '800' });
+      Draw.text(ctx, step.text, C.WIDTH / 2, y + 42, { size: 17, color: '#ffffff', weight: '700' });
+      ctx.fillStyle = '#7dffa0';
+      ctx.fillRect(x, y + h - 3, w * Math.min(1, t.count / step.goal), 3);
+      ctx.restore();
+    }
+
+    showPracticeResult(cleared) {
+      this.state = 'result';
+      this.stateTimer = 0;
+      this.input.releaseMouse();
+      this.music.play('menu');
+      this.ui.result.showPractice(cleared);
+    }
+
+    /* ---------------- relics / synergies ---------------- */
+    acquireRelic(relic) {
+      this.run.relics.push(relic);
+      relic.apply(this.player.stats, this.player, this.run);
+      this.player.onStatsChanged();
+      this.audio.play('clear');
+    }
+
+    checkSynergies(silent) {
+      const run = this.run;
+      for (const syn of BR.SYNERGIES) {
+        if (run.synergies.includes(syn.id)) continue;
+        if (!syn.requires.every((id) => run.upgrades[id])) continue;
+        run.synergies.push(syn.id);
+        syn.apply(this.player.stats, this.player);
+        this.player.onStatsChanged();
+        if (!silent) {
+          this.toasts.push({ title: syn.name, desc: syn.desc, icon: '⚡', time: 0, duration: 3.2, label: 'SYNERGY UNLOCKED' });
+          this.audio.play('clear');
+        }
+      }
     }
 
     onBossPhase(boss, phase) {
@@ -259,6 +418,11 @@
       for (const h of this.hazards) h.dead = true;
       for (const p of this.projectiles) if (p.owner === 'boss') p.dead = true;
       this.audio.play('bossDeath');
+      if (this.run.mode !== 'run') {
+        this.showBanner('PRACTICE CLEAR', `${(this.run.time).toFixed(1)}s`, '#7dffa0', R.victoryDelay);
+        return;
+      }
+      if (this.player.stats.relicFang) this.player.heal(this.player.stats.maxHp * 0.3);
 
       const soul = this.run.recordBossDefeat(boss.id);
       this.lastSoulGain = soul;
@@ -297,6 +461,10 @@
       this.particles.emit('death', p.x, p.y, 50, { color: '94,231,255' });
       this.particles.emit('blood', p.x, p.y, 30);
       this.audio.play('death');
+      if (this.run.mode !== 'run') {
+        this.showBanner('YOU DIED', '', '#ff4d6a', R.deathDelay);
+        return;
+      }
       const st = this.saveData.stats;
       st.deaths++;
       if (this.boss) st.bossDeaths[this.boss.id] = (st.bossDeaths[this.boss.id] || 0) + 1;
@@ -308,6 +476,18 @@
     showReward() {
       this.state = 'reward';
       this.stateTimer = 0;
+      this.music.play('menu');
+      if (this.run.shouldOfferRelic()) {
+        this.ui.relic.show(this.run.rollRelics(3), (relic) => {
+          this.acquireRelic(relic);
+          this._showUpgradeChoice();
+        });
+        return;
+      }
+      this._showUpgradeChoice();
+    }
+
+    _showUpgradeChoice() {
       const choices = BR.RewardSystem.roll(3, this.run.upgrades);
       this.ui.reward.show(choices, this.lastSoulGain || 0, this.boss ? this.boss.name : '');
     }
@@ -315,6 +495,7 @@
     onRewardChosen(upgrade) {
       this.run.addUpgrade(upgrade);
       BR.UpgradeSystem.apply(this.player.stats, upgrade, this.player);
+      this.checkSynergies(false);
       // Recover between bosses
       const s = this.player.stats;
       this.player.heal(s.maxHp * R.healBetweenBossesRatio + s.healAfterBoss);
@@ -335,6 +516,7 @@
       this.state = 'result';
       this.stateTimer = 0;
       this.input.releaseMouse();
+      this.music.play('menu');
       if (cleared) this.audio.play('clear');
       this.ui.result.show(cleared);
     }
@@ -346,6 +528,8 @@
 
     goToMenu(sub) {
       this.state = 'menu';
+      this.tutorial = null;
+      this.music.play('menu');
       this.paused = false;
       this.boss = null;
       this.player = null;
@@ -361,12 +545,14 @@
 
     /* ---------------- records / achievements ---------------- */
     recordStat(key, amount) {
+      if (this.run && this.run.mode !== 'run') return;
       const st = this.saveData.stats;
       st[key] = (st[key] || 0) + amount;
       if (key === 'parries') this.checkAchievements();
     }
 
     recordSpecial(key) {
+      if (this.run && this.run.mode !== 'run') return;
       const sp = this.saveData.stats.special;
       sp[key] = (sp[key] || 0) + 1;
       this.checkAchievements();
@@ -431,6 +617,7 @@
 
       this._drawScreenEffects(ctx);
       if (this.player && this.run && this.state !== 'menu') this.hud.draw(ctx, dt);
+      if (this.tutorial && this.state === 'fight') this._drawTutorial(ctx);
       if (this.state === 'intro') this._drawIntro(ctx);
       if (this.banner && this.state !== 'intro') this._drawBanner(ctx);
       if (this.state === 'menu') {
@@ -453,7 +640,7 @@
       ctx.strokeStyle = 'rgba(255,215,106,0.5)';
       ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
       Draw.text(ctx, t.icon, x + 34, y + h / 2, { size: 26, color: '#ffd76a' });
-      Draw.text(ctx, 'ACHIEVEMENT UNLOCKED', x + 64, y + 17, { size: 10, align: 'left', color: '#ffd76a', spacing: 2, weight: '800' });
+      Draw.text(ctx, t.label || 'ACHIEVEMENT UNLOCKED', x + 64, y + 17, { size: 10, align: 'left', color: '#ffd76a', spacing: 2, weight: '800' });
       Draw.text(ctx, t.title, x + 64, y + 35, { size: 16, align: 'left', color: '#fff', font: 'Georgia', weight: '700' });
       Draw.text(ctx, t.desc, x + 64, y + 52, { size: 11, align: 'left', color: '#b8b0cc' });
       ctx.restore();
@@ -505,7 +692,7 @@
       ctx.globalAlpha = a;
       const slide = (1 - Geo.easeOut(Geo.clamp(t / 0.6, 0, 1))) * 60;
       const cy = C.HEIGHT / 2;
-      Draw.text(ctx, `BOSS ${this.run.bossNumber} / ${this.run.totalBosses}`, C.WIDTH / 2, cy - 66, { size: 16, color: '#ff7088', spacing: 8, weight: '700' });
+      Draw.text(ctx, this.run.mode === 'run' ? `BOSS ${this.run.bossNumber} / ${this.run.totalBosses}` : this.run.mode.toUpperCase(), C.WIDTH / 2, cy - 66, { size: 16, color: '#ff7088', spacing: 8, weight: '700' });
       Draw.text(ctx, boss.name, C.WIDTH / 2 + slide, cy - 14, { size: 64, font: 'Georgia', weight: '700', color: '#fff', spacing: 10, stroke: 'rgba(0,0,0,0.8)', strokeWidth: 8 });
       ctx.fillStyle = boss.def.color;
       const lw = 420 * Geo.easeOut(Geo.clamp(t / 0.8, 0, 1));

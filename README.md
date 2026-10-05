@@ -26,6 +26,15 @@ It uses only HTML5, CSS and Vanilla JS with Canvas 2D. There are no external lib
 | ESC | Pause |
 | 1 / 2 / 3 | Pick a reward card · R: restart from the result screen |
 
+## Modes
+- **START RUN**: the main game (character + difficulty select)
+- **PRACTICE**: fight any boss starting from any phase. No records or SOUL.
+- **TUTORIAL**: learn movement, attacks, dashing, dodging, charging and PARRY against a training dummy in about 2 minutes. It is offered automatically before your first run.
+
+## Controller / Mobile
+- **Gamepad**: left stick to move, right stick to aim + auto-attack (or RT), A/LB dash, X/LT charge (hold), B/RB E skill, Start to pause. Use the D-pad + A in menus.
+- **Touch**: left half of the screen = move stick, right half = aim + auto-attack stick, plus DASH / Q (hold) / E / pause buttons. Play in landscape.
+
 ## Characters
 
 | Character | Basic attack (3rd/6th hit = finisher) | Q (hold to charge, release) | E |
@@ -53,6 +62,8 @@ PARRY: the incoming attack is cancelled, you heal 8 HP, gain 25 energy, and your
 - After each boss you **pick 1 of 3** run upgrades (33 kinds: attack, survival, movement, skill, technique, special) and recover 35% HP.
 - Technique upgrades: stronger finishers, shorter combos, faster charging, max-charge damage, parry healing, a damage buff after parries, and a shockwave when a dash ends.
 - Special upgrades: Glass Cannon, Phoenix Feather (one revive), Aegis (a barrier per fight), lifesteal and thorns.
+- **Relics**: choose 1 of 3 after the 1st boss and right before the final boss. They change the rules of the run (8 kinds: slow down boss time, burning, projectile reflection, ...).
+- **Synergies**: owning two specific upgrades unlocks an evolved effect automatically (8 kinds). Reward cards show a "⚡ SYNERGY" hint when picking them would complete one.
 - **SOUL** is earned per boss and kept after death. Spend it on 10 kinds of permanent upgrades in `UPGRADES` on the main menu (stats, more SOUL, reward rerolls, Head Start).
 
 ## How each boss is beaten
@@ -95,6 +106,12 @@ js/ui/                  canvas HUD + DOM overlays (menu, reward, boss select, re
    Each attack is `{ name, weight, cooldown, minRange, maxRange, phase, fn: this.atkX }`,
    where `*atkX()` creates a telegraph with `this.hazard({...})` and then `yield`s the number of seconds to wait.
 3. Register it with `BR.BossClasses.myBoss = MyBoss`, and add a `<script>` tag to `index.html`.
+
+### Music
+`js/core/music.js` generates background music procedurally with WebAudio (no files). Each arena gets its own key, scale and tempo, and the music gets more intense in later boss phases. Music and sound-effect volume are adjusted separately in Settings.
+
+### Cache
+After an update, raise the `?v=N` number on the script/CSS tags in `index.html` so browsers (and GitHub Pages) load the new files.
 
 ### Sound
 `AudioManager` uses synthesized WebAudio sounds when there are no audio files.

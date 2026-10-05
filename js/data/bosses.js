@@ -151,4 +151,10 @@
 
   BR.BOSS_BY_ID = {};
   for (const def of BR.BOSS_DATA) BR.BOSS_BY_ID[def.id] = def;
+
+  // Tutorial-only target (not part of the boss pool or bestiary)
+  BR.BOSS_BY_ID.trainingDummy = {
+    id: 'trainingDummy', name: 'TRAINING DUMMY', title: 'It Hits Back (Gently)', hp: 5000, radius: 34,
+    difficulty: 1, arena: 'stone', color: '#c9a35a', phaseThresholds: [], tip: '',
+  };
 })();

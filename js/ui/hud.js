@@ -121,7 +121,7 @@
       const g = this.game;
       const run = g.run;
       const x = C.WIDTH - 52;
-      Draw.text(ctx, `BOSS ${Math.min(run.bossNumber, run.totalBosses)} / ${run.totalBosses}`, x, 30, { size: 18, align: 'right', color: '#fff', weight: '800', spacing: 3, font: 'Georgia' });
+      Draw.text(ctx, run.mode === 'run' ? `BOSS ${Math.min(run.bossNumber, run.totalBosses)} / ${run.totalBosses}` : run.mode.toUpperCase(), x, 30, { size: 18, align: 'right', color: '#fff', weight: '800', spacing: 3, font: 'Georgia' });
       // Progress pips
       for (let i = 0; i < run.totalBosses; i++) {
         const px = x - (run.totalBosses - 1 - i) * 14 - 4;
@@ -132,6 +132,7 @@
       Draw.text(ctx, `SOUL ${g.saveData.soul}`, 52, 30, { size: 15, align: 'left', color: C.COLORS.soul, weight: '800', spacing: 2 });
       const theme = g.renderer.getTheme(g.theme);
       Draw.text(ctx, `${run.difficulty.name} · ${run.character.name} · ${theme.label.toUpperCase()}`, 52, 52, { size: 10, align: 'left', color: '#8d86a6', spacing: 2 });
+      if (run.relics.length) Draw.text(ctx, run.relics.map((r) => r.icon).join(' '), 52, 76, { size: 15, align: 'left', color: '#ffd76a' });
       Draw.text(ctx, run.difficulty.name, x, 72, { size: 10, align: 'right', color: run.difficulty.color, weight: '800', spacing: 3 });
     }
 

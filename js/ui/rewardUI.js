@@ -17,12 +17,15 @@
       const esc = BR.escapeHtml;
       const cards = choices.map((u, i) => {
         const stacks = g.run.upgrades[u.id] || 0;
+        const syn = BR.SYNERGIES.find((x) => !g.run.synergies.includes(x.id) && x.requires.includes(u.id)
+          && x.requires.every((r) => r === u.id || g.run.upgrades[r]));
         return `
           <div class="card rarity-${u.rarity}" data-index="${i}">
             <div class="hotkey">${i + 1}</div>
             <div class="tag">${BR.CATEGORY_LABELS[u.category] || ''} · ${u.rarity}</div>
             <div class="name">${esc(u.name)}</div>
             <div class="desc">${esc(u.desc).replace(/\n/g, '<br>')}</div>
+            ${syn ? `<div class="syn-tag">⚡ SYNERGY: ${esc(syn.name)}<br><small>${esc(syn.desc)}</small></div>` : ''}
             <div class="stack">${stacks > 0 ? `보유 ${stacks} / ${u.maxStacks}` : 'NEW'}</div>
           </div>`;
       }).join('');
@@ -71,5 +74,41 @@
     }
   }
 
+  // Relic choice (after the 1st boss and before the final boss)
+  class RelicUI {
+    constructor(game) {
+      this.game = game;
+      this.locked = false;
+    }
+
+    show(relics, onPick) {
+      const esc = BR.escapeHtml;
+      this.locked = false;
+      const cards = relics.map((r, i) => `
+        <div class="card relic-card" data-index="${i}">
+          <div class="relic-icon">${r.icon}</div>
+          <div class="tag">RELIC</div>
+          <div class="name">${esc(r.name)}</div>
+          <div class="desc">${esc(r.desc).replace(/\n/g, '<br>')}</div>
+        </div>`).join('');
+      const panel = BR.UIRoot.show('dim', `
+        <div class="heading" style="color:#ffb35e">RELIC FOUND</div>
+        <div class="subheading">유물은 RUN의 규칙을 바꾼다 — 하나만 가져갈 수 있다</div>
+        <div class="card-row">${cards}</div>
+      `);
+      panel.querySelectorAll('.card').forEach((el) => {
+        el.addEventListener('click', () => {
+          if (this.locked) return;
+          this.locked = true;
+          this.game.audio.play('button');
+          BR.UIRoot.clear();
+          onPick(relics[Number(el.dataset.index)]);
+        });
+      });
+      this.game.audio.play('reward');
+    }
+  }
+
+  BR.RelicUI = RelicUI;
   BR.RewardUI = RewardUI;
 })();

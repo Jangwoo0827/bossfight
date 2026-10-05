@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>BOSS RUSH RPG — Five Bosses</title>
-  <link rel="stylesheet" href="style.css?v=4">
+  <link rel="stylesheet" href="style.css?v=7">
 </head>
 <body>
   <div id="stage">
@@ -13,54 +13,59 @@
       <div id="ui-root"></div>
     </div>
   </div>
+  <div id="rotate-hint">📱↻<br>가로 모드로 돌려주세요</div>
 
   <!-- Classic scripts sharing the global BR namespace (works from file:// and static hosts) -->
-  <script src="js/config.js?v=4"></script>
-  <script src="js/core/collision.js?v=4"></script>
-  <script src="js/input.js?v=4"></script>
-  <script src="js/core/camera.js?v=4"></script>
-  <script src="js/core/renderer.js?v=4"></script>
-  <script src="js/core/particles.js?v=4"></script>
-  <script src="js/core/audio.js?v=4"></script>
+  <script src="js/config.js?v=7"></script>
+  <script src="js/core/collision.js?v=7"></script>
+  <script src="js/input.js?v=7"></script>
+  <script src="js/core/camera.js?v=7"></script>
+  <script src="js/core/renderer.js?v=7"></script>
+  <script src="js/core/particles.js?v=7"></script>
+  <script src="js/core/audio.js?v=7"></script>
+  <script src="js/core/music.js?v=7"></script>
 
-  <script src="js/entities/effect.js?v=4"></script>
-  <script src="js/entities/projectile.js?v=4"></script>
-  <script src="js/entities/player.js?v=4"></script>
-  <script src="js/entities/boss.js?v=4"></script>
+  <script src="js/entities/effect.js?v=7"></script>
+  <script src="js/entities/projectile.js?v=7"></script>
+  <script src="js/entities/player.js?v=7"></script>
+  <script src="js/entities/boss.js?v=7"></script>
 
-  <script src="js/data/bosses.js?v=4"></script>
-  <script src="js/data/upgrades.js?v=4"></script>
-  <script src="js/data/characters.js?v=4"></script>
-  <script src="js/data/achievements.js?v=4"></script>
+  <script src="js/data/bosses.js?v=7"></script>
+  <script src="js/data/upgrades.js?v=7"></script>
+  <script src="js/data/characters.js?v=7"></script>
+  <script src="js/data/achievements.js?v=7"></script>
+  <script src="js/data/relics.js?v=7"></script>
 
-  <script src="js/bosses/swordKnight.js?v=4"></script>
-  <script src="js/bosses/infernoMage.js?v=4"></script>
-  <script src="js/bosses/stoneGolem.js?v=4"></script>
-  <script src="js/bosses/voidHunter.js?v=4"></script>
-  <script src="js/bosses/frostWitch.js?v=4"></script>
-  <script src="js/bosses/stormCaller.js?v=4"></script>
-  <script src="js/bosses/bloodCount.js?v=4"></script>
-  <script src="js/bosses/westernShooter.js?v=4"></script>
-  <script src="js/bosses/clockworkWarden.js?v=4"></script>
-  <script src="js/bosses/duneWyrm.js?v=4"></script>
-  <script src="js/bosses/direAlpha.js?v=4"></script>
-  <script src="js/bosses/abyssLord.js?v=4"></script>
+  <script src="js/bosses/swordKnight.js?v=7"></script>
+  <script src="js/bosses/infernoMage.js?v=7"></script>
+  <script src="js/bosses/stoneGolem.js?v=7"></script>
+  <script src="js/bosses/voidHunter.js?v=7"></script>
+  <script src="js/bosses/frostWitch.js?v=7"></script>
+  <script src="js/bosses/stormCaller.js?v=7"></script>
+  <script src="js/bosses/bloodCount.js?v=7"></script>
+  <script src="js/bosses/westernShooter.js?v=7"></script>
+  <script src="js/bosses/clockworkWarden.js?v=7"></script>
+  <script src="js/bosses/duneWyrm.js?v=7"></script>
+  <script src="js/bosses/direAlpha.js?v=7"></script>
+  <script src="js/bosses/abyssLord.js?v=7"></script>
+  <script src="js/bosses/trainingDummy.js?v=7"></script>
 
-  <script src="js/systems/saveSystem.js?v=4"></script>
-  <script src="js/systems/upgradeSystem.js?v=4"></script>
-  <script src="js/systems/rewardSystem.js?v=4"></script>
-  <script src="js/systems/runSystem.js?v=4"></script>
-  <script src="js/systems/bossSystem.js?v=4"></script>
-  <script src="js/systems/combatSystem.js?v=4"></script>
+  <script src="js/systems/saveSystem.js?v=7"></script>
+  <script src="js/systems/upgradeSystem.js?v=7"></script>
+  <script src="js/systems/rewardSystem.js?v=7"></script>
+  <script src="js/systems/runSystem.js?v=7"></script>
+  <script src="js/systems/bossSystem.js?v=7"></script>
+  <script src="js/systems/combatSystem.js?v=7"></script>
 
-  <script src="js/ui/hud.js?v=4"></script>
-  <script src="js/ui/menu.js?v=4"></script>
-  <script src="js/ui/rewardUI.js?v=4"></script>
-  <script src="js/ui/bossSelectUI.js?v=4"></script>
-  <script src="js/ui/resultUI.js?v=4"></script>
-  <script src="js/ui/recordsUI.js?v=4"></script>
+  <script src="js/ui/hud.js?v=7"></script>
+  <script src="js/ui/menu.js?v=7"></script>
+  <script src="js/ui/rewardUI.js?v=7"></script>
+  <script src="js/ui/bossSelectUI.js?v=7"></script>
+  <script src="js/ui/resultUI.js?v=7"></script>
+  <script src="js/ui/recordsUI.js?v=7"></script>
+  <script src="js/ui/touchUI.js?v=7"></script>
 
-  <script src="js/game.js?v=4"></script>
-  <script src="js/main.js?v=4"></script>
+  <script src="js/game.js?v=7"></script>
+  <script src="js/main.js?v=7"></script>
 </body>
 </html>

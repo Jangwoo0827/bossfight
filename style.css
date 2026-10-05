@@ -262,3 +262,66 @@ html, body {
 .ach-bar div { height: 100%; background: #ffd76a; }
 .ach-prog { font-size: 11px; color: #c9c1de; flex: none; }
 .ach.ok .ach-prog { color: #ffd76a; font-size: 16px; }
+
+
+/* ---------- Main menu split row ---------- */
+.btn-split { display: flex; gap: 12px; }
+.btn-split .btn { flex: 1; }
+.menu-buttons { gap: 10px; margin-top: 34px; }
+
+/* ---------- Gamepad focus ---------- */
+.gp-focus { outline: 3px solid #ffd76a !important; outline-offset: 3px; }
+
+/* ---------- Practice ---------- */
+.practice-grid { display: grid; grid-template-columns: repeat(4, 220px); gap: 8px; }
+.pbtn {
+  pointer-events: auto; cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 12px; background: rgba(20,14,32,0.9); border: 1px solid rgba(255,255,255,0.08); border-left: 4px solid var(--accent);
+  color: #e9e6f2; font: 600 13px "Segoe UI", sans-serif; letter-spacing: 1px; transition: transform 0.1s;
+}
+.pbtn:hover { transform: translateY(-2px); }
+.pbtn.selected { background: color-mix(in srgb, var(--accent) 22%, rgba(20,14,32,0.95)); box-shadow: 0 0 16px color-mix(in srgb, var(--accent) 40%, transparent); }
+.pstars { color: #ffcf4a; font-size: 11px; }
+.practice-tip { width: 904px; min-height: 44px; margin: 12px 0 6px; font-size: 13px; color: #cfc8e2; line-height: 1.6; text-align: center; }
+.practice-row { display: flex; align-items: center; gap: 16px; margin-top: 8px; font-size: 12px; letter-spacing: 3px; color: #9890b2; }
+.practice-row .seg .btn.active { background: linear-gradient(180deg, #b8203f, #6a0f26); border-color: #ff8099; }
+
+/* ---------- Pause build ---------- */
+.pause-build { width: 760px; margin: 6px 0 4px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.pstats { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; width: 100%; }
+.pstat { background: rgba(20,14,32,0.85); border: 1px solid rgba(255,255,255,0.08); padding: 8px; text-align: center; }
+.pstat b { display: block; font-size: 18px; color: #fff; }
+.pstat span { font-size: 10px; letter-spacing: 2px; color: #9890b2; }
+.chip.syn { background: rgba(255,215,106,0.14); border-color: rgba(255,215,106,0.5); color: #ffe7a0; }
+.chip.relic { background: rgba(255,150,80,0.14); border-color: rgba(255,170,90,0.55); color: #ffd2a8; }
+
+/* ---------- Synergy / relic cards ---------- */
+.syn-tag { margin-top: 10px; padding: 7px 9px; font-size: 12px; font-weight: 700; color: #ffe7a0; background: rgba(255,215,106,0.12); border: 1px solid rgba(255,215,106,0.5); }
+.syn-tag small { font-weight: 400; color: #e8dcb0; }
+.relic-card { --accent: #ffb35e; text-align: center; align-items: center; }
+.relic-icon { font-size: 46px; color: #ffb35e; margin: 4px 0 6px; text-shadow: 0 0 18px rgba(255,170,80,0.7); }
+
+/* ---------- Touch controls ---------- */
+#touch-ui { position: absolute; inset: 0; pointer-events: none; touch-action: none; }
+#touch-ui.hidden { display: none; }
+.tzone { position: absolute; top: 90px; bottom: 0; pointer-events: auto; touch-action: none; }
+.tzone.left { left: 0; width: 600px; }
+.tzone.right { left: 640px; right: 0; }
+.tstick { position: absolute; width: 140px; height: 140px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.25); background: rgba(255,255,255,0.05); display: none; pointer-events: none; }
+.tstick.on { display: block; }
+.tknob { position: absolute; left: 45px; top: 45px; width: 50px; height: 50px; border-radius: 50%; background: rgba(255,255,255,0.35); }
+.tbtn {
+  position: absolute; pointer-events: auto; touch-action: none; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font: 800 16px "Segoe UI", sans-serif; color: #fff; background: rgba(20,14,32,0.55); border: 2px solid rgba(255,255,255,0.35); user-select: none;
+}
+.tbtn.down { background: rgba(94,231,255,0.45); }
+.tbtn.dash { width: 96px; height: 96px; right: 40px; bottom: 150px; }
+.tbtn.q { width: 76px; height: 76px; right: 160px; bottom: 60px; }
+.tbtn.e { width: 76px; height: 76px; right: 40px; bottom: 40px; }
+.tbtn.pause { width: 54px; height: 54px; left: 20px; top: 90px; font-size: 14px; }
+body { touch-action: none; }
+.pname { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12px; text-align: left; }
+.pstars { flex: none; margin-left: 6px; }
+
+#rotate-hint { display: none; position: fixed; inset: 0; z-index: 10; background: #06040b; color: #e9e6f2; font: 600 20px "Segoe UI", sans-serif; text-align: center; align-items: center; justify-content: center; line-height: 1.8; }
+@media (orientation: portrait) and (pointer: coarse) { #rotate-hint { display: flex; } }

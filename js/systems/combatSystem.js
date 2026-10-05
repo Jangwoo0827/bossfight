@@ -14,11 +14,23 @@
     }
 
     /* ---------------- per-frame collision ---------------- */
-    update() {
+    update(dt) {
       const g = this.game;
       const player = g.player;
       const boss = g.boss;
       if (!player) return;
+
+      // Ember Core burn
+      if (boss && boss.burnTimer > 0 && !boss.dead) {
+        boss.burnTimer -= dt;
+        boss.burnTick = (boss.burnTick || 0) - dt;
+        if (boss.burnTick <= 0) {
+          boss.burnTick = 0.5;
+          if (boss.isHittable()) {
+            this.damageBoss(player.stats.damage * player.stats.burn * 0.5, boss.x + Geo.rand(-12, 12), boss.y - boss.radius * 0.3, { dot: true, canCrit: false });
+          }
+        }
+      }
 
       for (const proj of g.projectiles) {
         if (proj.dead) continue;
@@ -43,7 +55,19 @@
           if (proj.clearsProjectiles) this._clearAround(proj.x, proj.y, proj.radius + 10);
         } else if (!player.dead && player.iframes <= 0 &&
                    Geo.circlesOverlap(proj.x, proj.y, proj.radius * 0.85, player.x, player.y, player.radius * 0.8)) {
-          if (this.damagePlayer(proj.damage, proj.x, proj.y)) proj.dead = true;
+          if (player.stats.reflectChance && !proj.unclearable && Math.random() < player.stats.reflectChance) {
+            // Mirror Shield: send it back
+            proj.owner = 'player';
+            proj.vx *= -1.2;
+            proj.vy *= -1.2;
+            proj.homing = 0;
+            proj.damage = player.stats.damage * 1.5;
+            proj.life = Math.max(proj.life, 1.5);
+            proj.hitTargets.clear();
+            g.spawnText(player.x, player.y - 28, 'REFLECT', { color: '#cfe8ff', size: 14, life: 0.5 });
+            g.particles.emit('spark', proj.x, proj.y, 8);
+            player.iframes = Math.max(player.iframes, 0.2);
+          } else if (this.damagePlayer(proj.damage, proj.x, proj.y)) proj.dead = true;
         }
       }
 
@@ -142,7 +166,7 @@
       this._spawnPlayerProjectiles(player, angle, s.projectileCount, P.waveSpread, {
         kind: 'wave', speed, radius: finisher ? 17 : 11,
         damage: s.damage * P.waveDamageRatio * mult, life: (P.waveRange * s.projectileRangeMult) / speed,
-        pierce: finisher, isFinisher: finisher,
+        pierce: finisher || s.wavePierce, isFinisher: finisher,
       }, skip);
 
       g.effects.push(new BR.SlashFx({
@@ -162,7 +186,7 @@
       this._spawnPlayerProjectiles(player, aim, s.projectileCount, G.spread, {
         kind: finisher ? 'bigBullet' : 'bullet', speed, radius: finisher ? 9 : G.radius,
         damage: s.damage * (finisher ? 2.6 : 1), life: (G.range * s.projectileRangeMult) / speed,
-        pierce: finisher, isFinisher: finisher, color: player.character.rgb,
+        pierce: finisher || s.wavePierce, isFinisher: finisher, color: player.character.rgb,
       });
       player.vx -= Math.cos(angle) * (finisher ? 60 : 12);
       player.vy -= Math.sin(angle) * (finisher ? 60 : 12);
@@ -204,7 +228,7 @@
         if (hit.bossHit && g.boss) skip.push(g.boss);
         const speed = 520 * s.projectileSpeedMult;
         this._spawnPlayerProjectiles(player, angle, s.projectileCount, 0.3, {
-          kind: 'shock', speed, radius: 16, damage: s.damage * H.shockRatio,
+          kind: 'shock', speed, radius: 16, damage: s.damage * H.shockRatio, pierce: !!s.wavePierce,
           life: (H.shockRange * s.projectileRangeMult) / speed, color: player.character.rgb,
         }, skip);
         if (hit.bossHit) g.camera.shakePreset('small');
@@ -233,7 +257,10 @@
       player.vy -= Math.sin(angle) * (120 + power * 180);
       g.camera.shakePreset(full ? 'medium' : 'small');
       g.particles.emit('hit', player.x, player.y, 10 + Math.round(power * 14), { angle, spread: 0.8, color: player.character.rgb });
-      if (full) g.spawnText(player.x, player.y - 30, 'MAX!', { color: '#ffffff', size: 16, life: 0.5 });
+      if (full) {
+        g.spawnText(player.x, player.y - 30, 'MAX!', { color: '#ffffff', size: 16, life: 0.5 });
+        g.onTutorialEvent('charge');
+      }
       g.audio.play('skill');
     }
 
@@ -279,6 +306,9 @@
       g.flashColor = '200,255,255';
       g.audio.play('reward');
       g.recordStat('parries', 1);
+      g.onTutorialEvent('parry');
+      if (player.stats.relicBattery && player.lanceCharges < player.stats.skillCharges) player.lanceCharges++;
+      if (player.stats.perfectCounter) this.playerChargeSkill(player, player.aim, 1);
     }
 
     _nova(player) {
@@ -346,7 +376,7 @@
       // Directional defence (e.g. gun block): source position decides
       const sx = opts.sx !== undefined ? opts.sx : player.x;
       const sy = opts.sy !== undefined ? opts.sy : player.y;
-      const incoming = boss.incomingMultiplier(sx, sy);
+      const incoming = opts.dot ? 1 : boss.incomingMultiplier(sx, sy);
       if (incoming <= 0) {
         g.particles.emit('spark', x, y, 6, { angle: Geo.angle(boss.x, boss.y, sx, sy), spread: 1 });
         g.spawnText(x, y - 12, 'BLOCKED', { color: '#c9c9c9', size: 13, life: 0.45 });
@@ -366,10 +396,23 @@
       const variance = 1 + (Math.random() * 2 - 1) * C.COMBAT.damageVariance;
       const amount = Math.max(1, Math.round(base * mult * variance));
 
+      if (opts.dot) {
+        boss.takeDamage(amount);
+        if (g.run) g.run.damageDealt += amount;
+        g.spawnDamageNumber(x, y - 10, amount, '#ff9a4a', 13);
+        g.particles.emit('fire', x, y, 2);
+        if (boss.hp <= 0) g.onBossDefeated();
+        return amount;
+      }
+
       boss.takeDamage(amount);
+      if (s.burn) boss.burnTimer = 3;
       if (g.run) g.run.damageDealt += amount;
       player.energy = Math.min(P.maxEnergy, player.energy + P.energyOnHit + s.energyOnHitBonus);
-      if (opts.finisher) g.recordStat('finishers', 1);
+      if (opts.finisher) {
+        g.recordStat('finishers', 1);
+        g.onTutorialEvent('finisher');
+      }
       if (s.lifestealPer) {
         player.lifestealAcc += amount;
         const heal = Math.floor(player.lifestealAcc / s.lifestealPer);
@@ -442,8 +485,9 @@
         g.audio.play('nova');
         return true;
       }
-      const final = Math.max(1, Math.round(amount * (1 - p.stats.damageReduction)));
+      const final = Math.max(1, Math.round(amount * (1 - p.stats.damageReduction) * (p.stats.damageTakenMult || 1)));
       p.hp -= final;
+      if (g.run && g.run.mode === 'tutorial') p.hp = Math.max(1, p.hp);
       p.iframes = P.hitIframes;
       p.hurtTimer = P.hitIframes;
       p.qCharge = -1;
@@ -490,7 +534,7 @@
     dashShock(player) {
       const g = this.game;
       const s = player.stats;
-      const r = 90;
+      const r = 90 * (s.dashShockRadius || 1);
       const boss = g.boss;
       g.effects.push(new BR.RingFx({ x: player.x, y: player.y, r0: 10, r1: r, color: player.character.rgb, width: 8, life: 0.25 }));
       if (boss && boss.isHittable() && Geo.dist(player.x, player.y, boss.x, boss.y) <= r + boss.radius) {

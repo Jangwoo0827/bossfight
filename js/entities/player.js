@@ -97,7 +97,7 @@
 
       const move = allowControl ? input.moveVector() : { x: 0, y: 0 };
       if (allowControl) {
-        this.aim = Geo.angle(this.x, this.y, input.mouse.x, input.mouse.y);
+        this.aim = input.aimAngle !== null ? input.aimAngle : Geo.angle(this.x, this.y, input.mouse.x, input.mouse.y);
         if (input.wasPressed('Space') || input.wasPressed('ShiftLeft')) this.dashBuffer = P.dashBuffer;
         if (this.dashBuffer > 0 && this.dashCooldownTimer <= 0 && !this.isDashing) this._startDash(move);
       } else if (this.isCharging) {
@@ -131,7 +131,7 @@
 
       if (!allowControl) return;
 
-      if (input.mouse.down && this.attackTimer <= 0 && !this.isDashing && !this.isCharging) this._attack();
+      if (input.attacking && this.attackTimer <= 0 && !this.isDashing && !this.isCharging) this._attack();
 
       if (this.isCharging) {
         if (input.isDown('KeyQ')) {
@@ -184,6 +184,7 @@
       if (dx === 0 && dy === 0) { dx = Math.cos(this.aim); dy = Math.sin(this.aim); }
       this.startBurst(dx, dy, this.stats.dashDistance, P.dashDuration, P.dashIframes);
       this.wasDash = true;
+      this.game.onTutorialEvent('dash');
       this.dashCooldownTimer = this.dashCooldown;
       this.dashBuffer = 0;
       this.qCharge = -1;
@@ -192,7 +193,8 @@
     }
 
     _attack() {
-      this.attackTimer = this.character.attackCooldown / this.stats.attackSpeedMult;
+      const frenzy = this.stats.bloodFrenzy && this.hp < this.stats.maxHp * 0.5 ? 1.35 : 1;
+      this.attackTimer = this.character.attackCooldown / (this.stats.attackSpeedMult * frenzy);
       if (this.comboTimer <= 0) this.comboStep = 0;
       this.comboStep++;
       const finisher = this.comboStep >= this.comboLength;

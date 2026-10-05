@@ -48,6 +48,10 @@
         <div class="subtitle">Five Bosses</div>
         <div class="menu-buttons">
           <button class="btn primary" data-action="start">Start Run</button>
+          <div class="btn-split">
+            <button class="btn" data-action="practice">Practice</button>
+            <button class="btn" data-action="tutorial">Tutorial</button>
+          </div>
           <button class="btn" data-action="shop">Upgrades</button>
           <button class="btn" data-action="records">Records</button>
           <button class="btn" data-action="settings">Settings</button>
@@ -62,10 +66,88 @@
         </div>
       `);
       this._bind(panel, {
-        start: () => this.showRunSetup(),
+        start: () => {
+          const s = g.saveData;
+          if (!s.settings.tutorialDone && s.stats.runs === 0) this.showTutorialOffer();
+          else this.showRunSetup();
+        },
+        practice: () => this.showPractice(),
+        tutorial: () => g.startTutorial(),
         shop: () => this.showShop(),
         records: () => g.ui.records.show(() => this.showMain()),
         settings: () => this.showSettings(() => this.showMain()),
+      });
+    }
+
+    showTutorialOffer() {
+      const g = this.game;
+      const panel = UIRoot.show('dim', `
+        <div class="heading">FIRST TIME?</div>
+        <div class="subheading">2분짜리 튜토리얼로 이동 · 공격 · 대시 · 충전 · PARRY를 익힐 수 있습니다</div>
+        <div class="btn-row">
+          <button class="btn primary" data-action="yes">Play Tutorial</button>
+          <button class="btn" data-action="skip">Skip</button>
+        </div>
+      `);
+      this._bind(panel, {
+        yes: () => g.startTutorial(),
+        skip: () => {
+          g.saveData.settings.tutorialDone = true;
+          BR.SaveSystem.save(g.saveData);
+          this.showRunSetup();
+        },
+      });
+    }
+
+    // Practice: fight any boss, any phase, nothing recorded
+    showPractice(preset) {
+      const g = this.game;
+      const esc = escapeHtml;
+      const p = preset || g.practiceSetup || {};
+      let bossId = p.bossId || BR.BOSS_DATA[0].id;
+      let charId = p.characterId || g.saveData.settings.lastCharacter || 'blade';
+      let phase = p.phase || 1;
+      const bossCards = BR.BOSS_DATA.map((b) => `
+        <button class="pbtn" style="--accent:${b.color}" data-boss="${b.id}">
+          <span class="pname">${esc(b.name)}</span>
+          <span class="pstars">${'★'.repeat(b.difficulty)}</span>
+        </button>`).join('');
+      const charBtns = BR.CHARACTERS.map((c) => `<button class="btn small" style="--accent:${c.color}" data-char="${c.id}">${esc(c.name)}</button>`).join('');
+      const panel = UIRoot.show('dim', `
+        <div class="heading">PRACTICE</div>
+        <div class="subheading">원하는 보스를 원하는 페이즈부터 연습 · 기록과 SOUL은 남지 않습니다</div>
+        <div class="practice-grid">${bossCards}</div>
+        <div class="practice-tip" data-role="tip"></div>
+        <div class="practice-row"><span>CHARACTER</span><div class="seg">${charBtns}</div></div>
+        <div class="practice-row"><span>START PHASE</span><div class="seg" data-role="phases"></div></div>
+        <div class="btn-row" style="margin-top:16px">
+          <button class="btn" data-action="back">Back</button>
+          <button class="btn primary" data-action="go" style="min-width:220px">Fight</button>
+        </div>
+      `);
+      const refresh = () => {
+        const def = BR.BOSS_BY_ID[bossId];
+        const maxPhase = def.phaseThresholds.length + 1;
+        if (phase > maxPhase) phase = 1;
+        panel.querySelectorAll('[data-boss]').forEach((el) => el.classList.toggle('selected', el.dataset.boss === bossId));
+        panel.querySelectorAll('[data-char]').forEach((el) => el.classList.toggle('active', el.dataset.char === charId));
+        panel.querySelector('[data-role="tip"]').textContent = def.tip;
+        const ph = panel.querySelector('[data-role="phases"]');
+        ph.innerHTML = Array.from({ length: maxPhase }, (_, i) => `<button class="btn small ${phase === i + 1 ? 'active' : ''}" data-phase="${i + 1}">Phase ${i + 1}</button>`).join('');
+        ph.querySelectorAll('[data-phase]').forEach((el) => el.addEventListener('click', () => {
+          phase = Number(el.dataset.phase); g.audio.play('button'); refresh();
+        }));
+      };
+      panel.querySelectorAll('[data-boss]').forEach((el) => el.addEventListener('click', () => {
+        bossId = el.dataset.boss; g.audio.play('button'); refresh();
+      }));
+      panel.querySelectorAll('[data-char]').forEach((el) => el.addEventListener('click', () => {
+        charId = el.dataset.char; g.audio.play('button'); refresh();
+      }));
+      refresh();
+      this._bind(panel, {
+        back: () => this.showMain(),
+        go: () => g.startPractice(bossId, charId, phase),
       });
     }
 
@@ -173,7 +255,8 @@
         <div class="heading">SETTINGS</div>
         <div class="subheading">&nbsp;</div>
         <div class="settings-box">
-          <div class="setting"><span>Volume</span><input type="range" min="0" max="100" value="${Math.round(s.volume * 100)}" data-role="volume"></div>
+          <div class="setting"><span>Sound FX</span><input type="range" min="0" max="100" value="${Math.round(s.volume * 100)}" data-role="volume"></div>
+          <div class="setting"><span>Music</span><input type="range" min="0" max="100" value="${Math.round(s.musicVolume * 100)}" data-role="music"></div>
           <div class="setting"><span>Screen Shake</span><div class="seg">${shakeBtn(0, 'Off')}${shakeBtn(0.5, 'Low')}${shakeBtn(1, 'Full')}</div></div>
           <div class="setting"><span>Damage Numbers</span><div class="seg">
             <button class="btn ${s.damageNumbers ? 'active' : ''}" data-action="dmg" data-v="1">On</button>
@@ -182,6 +265,12 @@
         </div>
         <div class="btn-row" style="margin-top:24px"><button class="btn" data-action="back">Back</button></div>
       `);
+      const music = panel.querySelector('[data-role="music"]');
+      music.addEventListener('input', () => {
+        s.musicVolume = Number(music.value) / 100;
+        g.applySettings();
+      });
+      music.addEventListener('change', () => BR.SaveSystem.save(g.saveData));
       const slider = panel.querySelector('[data-role="volume"]');
       slider.addEventListener('input', () => {
         s.volume = Number(slider.value) / 100;
@@ -214,11 +303,38 @@
       this.showSettings(onBack);
     }
 
+    // Current build for the pause screen: upgrades, synergies, relics, key stats
+    _buildSummaryHtml() {
+      const g = this.game;
+      const run = g.run, p = g.player;
+      if (!run || !p) return '';
+      const esc = escapeHtml;
+      const s = p.stats;
+      const ups = run.buildSummary().map((u) => `<span class="chip">${esc(u.name)}${u.stacks > 1 ? ` ×${u.stacks}` : ''}</span>`).join('') || '<span class="chip empty">No upgrades</span>';
+      const syns = run.synergies.map((id) => BR.SYNERGIES.find((x) => x.id === id)).filter(Boolean)
+        .map((x) => `<span class="chip syn">⚡ ${esc(x.name)}</span>`).join('');
+      const relics = run.relics.map((r) => `<span class="chip relic">${r.icon} ${esc(r.name)}</span>`).join('');
+      const stat = (k, v) => `<div class="pstat"><b>${v}</b><span>${k}</span></div>`;
+      return `
+        <div class="pause-build">
+          <div class="pstats">
+            ${stat('DAMAGE', Math.round(s.damage * s.damageMult))}
+            ${stat('CRIT', `${Math.round(s.critChance * 100)}%`)}
+            ${stat('ATK SPD', `${Math.round(s.attackSpeedMult * 100)}%`)}
+            ${stat('MAX HP', s.maxHp)}
+            ${stat('ARMOR', `${Math.round((1 - (1 - s.damageReduction) * s.damageTakenMult) * 100)}%`)}
+            ${stat('DASH CD', `${s.dashCooldown.toFixed(2)}s`)}
+          </div>
+          <div class="build-chips">${relics}${syns}${ups}</div>
+        </div>`;
+    }
+
     showPause() {
       const g = this.game;
       const panel = UIRoot.show('soft', `
         <div class="heading">PAUSED</div>
         <div class="subheading">${escapeHtml(g.boss ? g.boss.name : '')}</div>
+        ${this._buildSummaryHtml()}
         <div class="menu-buttons" style="margin-top:10px">
           <button class="btn primary" data-action="resume">Resume</button>
           <button class="btn" data-action="settings">Settings</button>
