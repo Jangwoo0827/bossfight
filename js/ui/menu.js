@@ -55,13 +55,14 @@
           <button class="btn" data-action="shop">Upgrades</button>
           <button class="btn" data-action="records">Records</button>
           <button class="btn" data-action="settings">Settings</button>
+          <button class="btn small" data-action="notes">Patch Notes${g.saveData.settings.lastSeenVersion !== BR.GAME_VERSION ? ' <span class="new-badge">NEW</span>' : ''}</button>
         </div>
         <div class="controls">
           <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 이동 &nbsp; <kbd>마우스</kbd> 조준 &nbsp; <kbd>좌클릭</kbd> 공격 (근접 베기 + 검기)<br>
           <kbd>SPACE</kbd> 대시 (무적) &nbsp; <kbd>Q</kbd> 꾹 눌러 충전 스킬 &nbsp; <kbd>E</kbd> 캐릭터 스킬 (타이밍 맞추면 PARRY) &nbsp; <kbd>ESC</kbd> 일시정지
         </div>
         <div class="menu-footer">
-          RUNS ${st.runs} · CLEARS ${st.clears} · BEST ${st.bestStage} / ${BR.CONFIG.RUN.totalBosses}<br>
+          v${BR.GAME_VERSION} · RUNS ${st.runs} · CLEARS ${st.clears} · BEST ${st.bestStage} / ${BR.CONFIG.RUN.totalBosses}<br>
           빨간 영역 = 곧 공격이 들어오는 곳. 차오르는 속도 = 남은 시간.
         </div>
       `);
@@ -75,6 +76,7 @@
         tutorial: () => g.startTutorial(),
         shop: () => this.showShop(),
         records: () => g.ui.records.show(() => this.showMain()),
+        notes: () => this.showPatchNotes(),
         settings: () => this.showSettings(() => this.showMain()),
       });
     }
@@ -207,6 +209,28 @@
         back: () => this.showMain(),
         go: () => g.startRun(charId, diffId),
       });
+    }
+
+    showPatchNotes() {
+      const g = this.game;
+      const esc = escapeHtml;
+      g.saveData.settings.lastSeenVersion = BR.GAME_VERSION;
+      BR.SaveSystem.save(g.saveData);
+      const notes = BR.PATCH_NOTES.map((v, i) => `
+        <div class="note ${i === 0 ? 'latest' : ''}">
+          <div class="note-head"><span class="note-ver">v${esc(v.version)}</span><span class="note-title">${esc(v.title)}</span>${i === 0 ? '<span class="new-badge">LATEST</span>' : ''}</div>
+          ${v.sections.map(([tag, items]) => `
+            <div class="note-sec"><span class="note-tag tag-${tag.toLowerCase()}">${esc(tag)}</span>
+              <ul>${items.map((it) => `<li>${esc(it)}</li>`).join('')}</ul>
+            </div>`).join('')}
+        </div>`).join('');
+      const panel = UIRoot.show('dim', `
+        <div class="heading">PATCH NOTES</div>
+        <div class="subheading">현재 버전 v${BR.GAME_VERSION}</div>
+        <div class="notes-list">${notes}</div>
+        <div class="btn-row" style="margin-top:16px"><button class="btn" data-action="back">Back</button></div>
+      `);
+      this._bind(panel, { back: () => this.showMain() });
     }
 
     showShop() {

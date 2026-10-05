@@ -7,7 +7,7 @@
       version: 1,
       soul: 0,
       meta: { vitality: 0, might: 0, swiftness: 0, reflex: 0 },
-      settings: { volume: 0.5, shake: 1, damageNumbers: true, lastCharacter: 'blade', lastDifficulty: 'normal', musicVolume: 0.35, tutorialDone: false },
+      settings: { volume: 0.5, shake: 1, damageNumbers: true, lastCharacter: 'blade', lastDifficulty: 'normal', musicVolume: 0.35, tutorialDone: false, lastSeenVersion: '' },
       stats: {
         runs: 0, clears: 0, bestStage: 0, totalSoul: 0,
         deaths: 0, parries: 0, finishers: 0, totalDamage: 0, damageTaken: 0, playTime: 0,

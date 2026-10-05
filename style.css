@@ -325,3 +325,20 @@ body { touch-action: none; }
 
 #rotate-hint { display: none; position: fixed; inset: 0; z-index: 10; background: #06040b; color: #e9e6f2; font: 600 20px "Segoe UI", sans-serif; text-align: center; align-items: center; justify-content: center; line-height: 1.8; }
 @media (orientation: portrait) and (pointer: coarse) { #rotate-hint { display: flex; } }
+
+/* ---------- Patch notes ---------- */
+.new-badge { display: inline-block; margin-left: 8px; padding: 1px 6px; font-size: 10px; letter-spacing: 1px; color: #1a0e00; background: #ffd76a; vertical-align: middle; }
+.notes-list { width: 820px; height: 520px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding-right: 6px; }
+.note { background: rgba(20,14,32,0.88); border: 1px solid rgba(255,255,255,0.08); border-left: 4px solid #6c5a96; padding: 14px 18px; }
+.note.latest { border-left-color: #ffd76a; }
+.note-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 8px; }
+.note-ver { font: 700 20px Georgia, serif; color: #fff; }
+.note-title { font-size: 14px; letter-spacing: 2px; color: #b9b2cc; text-transform: uppercase; }
+.note-sec { display: flex; gap: 12px; margin-top: 6px; }
+.note-tag { flex: none; width: 74px; height: 20px; font-size: 10px; font-weight: 800; letter-spacing: 1px; display: flex; align-items: center; justify-content: center; margin-top: 2px; }
+.tag-new { background: rgba(125,255,160,0.15); color: #7dffa0; border: 1px solid rgba(125,255,160,0.45); }
+.tag-changed { background: rgba(143,183,255,0.15); color: #8fb7ff; border: 1px solid rgba(143,183,255,0.45); }
+.tag-balance { background: rgba(255,154,74,0.15); color: #ffb37a; border: 1px solid rgba(255,154,74,0.45); }
+.tag-fixed { background: rgba(255,77,106,0.15); color: #ff8da0; border: 1px solid rgba(255,77,106,0.45); }
+.note-sec ul { list-style: none; font-size: 13.5px; color: #d8d1ea; line-height: 1.75; }
+.note-sec li::before { content: '· '; color: #8d86a6; }

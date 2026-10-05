@@ -7,6 +7,8 @@ It uses only HTML5, CSS and Vanilla JS with Canvas 2D. There are no external lib
 
 **https://jangwoo0827.github.io/bossfight/**
 
+Version history: [CHANGELOG.md](CHANGELOG.md) (also in-game under **PATCH NOTES**)
+
 ## Running the game
 
 - Open `index.html` directly in a browser. It also works from `file://`, because it uses classic scripts, not ES modules.
@@ -109,6 +111,9 @@ js/ui/                  canvas HUD + DOM overlays (menu, reward, boss select, re
 
 ### Music
 `js/core/music.js` generates background music procedurally with WebAudio (no files). Each arena gets its own key, scale and tempo, and the music gets more intense in later boss phases. Music and sound-effect volume are adjusted separately in Settings.
+
+### Releasing a new version
+Add a new entry at the top of `BR.PATCH_NOTES` in `js/data/patchNotes.js`. That becomes the game version, and players who haven't read it yet see a NEW badge on the main menu.
 
 ### Cache
 After an update, raise the `?v=N` number on the script/CSS tags in `index.html` so browsers (and GitHub Pages) load the new files.

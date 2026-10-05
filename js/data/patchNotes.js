@@ -1,0 +1,86 @@
+/* Version history shown in the PATCH NOTES screen. Newest first. */
+(function () {
+  'use strict';
+
+  BR.PATCH_NOTES = [
+    {
+      version: '1.4.0',
+      title: 'Practice & Polish',
+      sections: [
+        ['NEW', [
+          'PRACTICE 모드 — 원하는 보스를 원하는 페이즈부터 연습 (기록·SOUL 없음)',
+          'TUTORIAL — 이동 · 공격 · 대시 · 회피 · 충전 · PARRY를 2분 만에 익히기',
+          '배경음악 — 아레나마다 다른 음악, 보스 페이즈가 오를수록 격해진다',
+          '유물(Relic) 8종 — 1번째 보스 후 / 최종 보스 직전에 선택',
+          '시너지 8종 — 특정 업그레이드 2개를 모으면 진화 효과 자동 해금',
+          '게임패드 지원 (트윈 스틱, 메뉴 조작) · 모바일 터치 컨트롤',
+          '일시정지 화면에 현재 스탯 · 유물 · 시너지 · 빌드 표시',
+          '패치 노트 화면',
+        ]],
+        ['CHANGED', [
+          '설정에 음악 볼륨 / 효과음 볼륨 분리',
+          '첫 RUN 전에 튜토리얼 안내',
+        ]],
+        ['FIXED', [
+          '터치 사용 후 마우스 조준이 돌아오지 않던 문제',
+        ]],
+      ],
+    },
+    {
+      version: '1.3.0',
+      title: 'Deeper Builds',
+      sections: [
+        ['NEW', [
+          'RUN 업그레이드 13종 추가 (총 33종) — TECHNIQUE 카테고리 신설',
+          'Glass Cannon · Phoenix Feather(부활) · Aegis(보호막) · 흡혈 · 반사 피해',
+          'SOUL 영구 강화 6종 추가 (총 10종) — 보상 다시 뽑기, Head Start 등',
+          'GitHub Pages로 웹에서 바로 플레이',
+        ]],
+        ['FIXED', [
+          '업데이트 후 브라우저가 옛 파일을 쓰던 캐시 문제',
+          'SOUL 상점이 화면을 넘치던 문제',
+        ]],
+      ],
+    },
+    {
+      version: '1.2.0',
+      title: 'Twelve Bosses',
+      sections: [
+        ['NEW', [
+          '캐릭터 3종 — BLADEMASTER · GUNSLINGER · IRON GUARDIAN',
+          '3타 콤보 피니셔 · Q 꾹 눌러 충전 · 타이밍 맞춘 E로 PARRY',
+          '보스 4종 추가 — Western Shooter · Clockwork Warden · Dune Wyrm · Dire Alpha (총 12종)',
+          '난이도 4단계 — EASY(4전) · NORMAL(5전) · HARD(7전) · NIGHTMARE(10전)',
+          'RECORDS — 통계 · 보스 도감 · 업적 22종',
+        ]],
+        ['BALANCE', [
+          'Gunslinger 공격력 하향, Western Shooter 근접 방어 빈도 하향',
+        ]],
+        ['FIXED', [
+          'HUD 글자 간격 때문에 프레임이 크게 떨어지던 성능 문제',
+        ]],
+      ],
+    },
+    {
+      version: '1.1.0',
+      title: 'New Challengers',
+      sections: [
+        ['NEW', [
+          '보스 3종 추가 — Frost Witch · Storm Caller · Blood Count',
+          '보스 선택이 매번 무작위 3택으로 바뀌어 판마다 다른 루트',
+        ]],
+      ],
+    },
+    {
+      version: '1.0.0',
+      title: 'Five Bosses',
+      sections: [
+        ['NEW', [
+          '첫 출시 — 보스 5종 · 보상 3택 · 다음 보스 선택 · SOUL 영구 성장',
+        ]],
+      ],
+    },
+  ];
+
+  BR.GAME_VERSION = BR.PATCH_NOTES[0].version;
+})();
