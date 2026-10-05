@@ -307,6 +307,30 @@
       return { x: Geo.rand(A.left + margin, A.right - margin), y: Geo.rand(A.top + margin, A.bottom - margin) };
     }
 
+    // Parry stun: interrupts the current attack (not during phase transitions)
+    stun(duration) {
+      if (this.dead || !this.active || this.state === 'ENRAGED' || this.time < (this.stunImmuneUntil || 0)) return false;
+      this.stunImmuneUntil = this.time + BR.CONFIG.PARRY.stunCooldown;
+      this.routine = this._stunRoutine(duration);
+      this.wait = 0;
+      this.stepRoutine(0);
+      return true;
+    }
+
+    *_stunRoutine(duration) {
+      this.state = 'STUNNED';
+      this.stop();
+      this.contactDamage = 0;
+      this.airborne = false;
+      this.invulnerable = false;
+      this.alpha = 1;
+      if (this.burrowed) this.burrowed = false;
+      if (this.guarding) this.guarding = false;
+      this.statusText = 'STUNNED';
+      yield duration;
+      this.statusText = '';
+    }
+
     takeDamage(amount) {
       if (this.dead) return;
       this.hp = Math.max(0, this.hp - amount);

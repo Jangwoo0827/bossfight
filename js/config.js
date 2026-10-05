@@ -51,8 +51,11 @@ BR.CONFIG = {
   },
 
   PARRY: {
-    heal: 8,
+    heal: 15,
     energy: 25,
+    reflectMult: 2.5,        // counter damage = player damage x this
+    stun: 1.0,               // boss stun on parry (seconds)
+    stunCooldown: 4,         // a boss can't be stunned again for this long
     cooldownRefund: 0.5,     // E cooldown cut on a successful parry
     hazardProgress: 0.55,    // a telegraph at least this far along counts as "about to hit"
     projectileRadius: 70,    // enemy bullets this close count as a parry

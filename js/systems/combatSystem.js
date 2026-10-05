@@ -365,6 +365,15 @@
       g.flashColor = '200,255,255';
       g.audio.play('parry');
       g.recordStat('parries', 1);
+      // Counter: reflect damage + stun the boss
+      const boss = g.boss;
+      if (boss && boss.isHittable()) {
+        this.damageBoss(player.stats.damage * PR.reflectMult, boss.x, boss.y - boss.radius * 0.4, { canCrit: false, skill: true, parry: true });
+        if (!boss.dead && boss.stun(PR.stun)) {
+          g.particles.emit('spark', boss.x, boss.y - boss.radius, 12, { angle: -Math.PI / 2, spread: 1.2 });
+          g.camera.shakePreset('medium');
+        }
+      }
       g.onTutorialEvent('parry');
       if (player.stats.relicBattery && player.lanceCharges < player.stats.skillCharges) player.lanceCharges++;
       if (player.stats.perfectCounter) this.playerChargeSkill(player, player.aim, 1);
@@ -453,7 +462,7 @@
       // Directional defence (e.g. gun block): source position decides
       const sx = opts.sx !== undefined ? opts.sx : player.x;
       const sy = opts.sy !== undefined ? opts.sy : player.y;
-      const incoming = opts.dot ? 1 : boss.incomingMultiplier(sx, sy);
+      const incoming = opts.dot || opts.parry ? 1 : boss.incomingMultiplier(sx, sy);
       if (incoming <= 0) {
         g.particles.emit('spark', x, y, 6, { angle: Geo.angle(boss.x, boss.y, sx, sy), spread: 1 });
         g.spawnText(x, y - 12, 'BLOCKED', { color: '#c9c9c9', size: 13, life: 0.45 });

@@ -4,6 +4,15 @@
 
   BR.PATCH_NOTES = [
     {
+      version: '1.8.1',
+      title: 'Riposte',
+      sections: [
+        ['CHANGED', [
+          'PARRY 강화 — 회복 8 → 15, 보스에게 공격력 250% 반격 피해, 보스 1초 기절 (같은 보스는 4초간 재기절 불가)',
+        ]],
+      ],
+    },
+    {
       version: '1.8.0',
       title: 'Gauntlet',
       sections: [
