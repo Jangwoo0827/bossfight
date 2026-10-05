@@ -32,7 +32,11 @@ Version history: [CHANGELOG.md](CHANGELOG.md) (also in-game under **PATCH NOTES*
 - **START RUN**: the main game (character + difficulty select)
 - **PRACTICE**: fight any boss starting from any phase. No records or SOUL.
 - **DAILY**: today's challenge. Everyone gets the same boss order, rewards, relics and modifier, and your best result for the day is recorded.
+- **BOSS RUSH**: all 12 bosses in a row, no upgrades and no permanent upgrades. A pure-skill time attack with its own leaderboard.
 - **TUTORIAL**: learn movement, attacks, dashing, dodging, charging and PARRY against a training dummy in about 2 minutes. It is offered automatically before your first run.
+
+## Install as an app (PWA)
+On a phone, open the page in Chrome/Safari → "Add to Home screen" to play it like an app. After one visit it also works offline.
 
 ## Controller / Mobile
 - **Gamepad**: left stick to move, right stick to aim + auto-attack (or RT), A/LB dash, X/LT charge (hold), B/RB E skill, Start to pause. Use the D-pad + A in menus.

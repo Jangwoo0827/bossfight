@@ -14,7 +14,7 @@
         runs: 0, clears: 0, bestStage: 0, totalSoul: 0,
         deaths: 0, parries: 0, finishers: 0, totalDamage: 0, damageTaken: 0, playTime: 0,
         flawlessBosses: 0, fastestBoss: 0,
-        bossKills: {}, bossDeaths: {}, clearsByDifficulty: {}, clearsByCharacter: {}, bestClearTime: {}, special: {}, daily: {},
+        bossKills: {}, bossDeaths: {}, clearsByDifficulty: {}, clearsByCharacter: {}, bestClearTime: {}, special: {}, daily: {}, rushBest: {}, rushBestStage: 0, leaderboard: {},
       },
       achievements: {},
     };

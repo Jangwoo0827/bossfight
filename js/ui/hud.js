@@ -142,7 +142,7 @@
       }
       Draw.text(ctx, `SOUL ${g.saveData.soul}`, 52, 30, { size: 15, align: 'left', color: C.COLORS.soul, weight: '800', spacing: 2 });
       const theme = g.renderer.getTheme(g.theme);
-      Draw.text(ctx, `${run.daily ? 'DAILY · ' : ''}${run.difficulty.name} · ${run.character.name} · ${theme.label.toUpperCase()}`, 52, 52, { size: 10, align: 'left', color: '#8d86a6', spacing: 2 });
+      Draw.text(ctx, `${run.rush ? 'BOSS RUSH · ' : ''}${run.daily ? 'DAILY · ' : ''}${run.difficulty.name} · ${run.character.name} · ${theme.label.toUpperCase()}`, 52, 52, { size: 10, align: 'left', color: '#8d86a6', spacing: 2 });
       if (run.relics.length) Draw.text(ctx, run.relics.map((r) => r.icon).join(' '), 52, 76, { size: 15, align: 'left', color: '#ffd76a' });
       if (run.modifiers.length) Draw.text(ctx, run.modifiers.map((m) => m.icon).join(' '), 52 + run.relics.length * 24 + (run.relics.length ? 10 : 0), 76, { size: 14, align: 'left', color: '#ff8da0' });
       Draw.text(ctx, run.difficulty.name, x, 72, { size: 10, align: 'right', color: run.difficulty.color, weight: '800', spacing: 3 });
@@ -181,6 +181,14 @@
         C.WIDTH / 2, 712, { size: 11, color: 'rgba(200,190,225,0.55)', spacing: 1 });
     }
   }
+
+  // Replace {move} {up} {down} {left} {right} {dash} {charge} {skill} with the bound keys
+  BR.fillKeys = (text) => {
+    const hud = BR.game && BR.game.hud;
+    if (!hud || !text) return text;
+    return String(text).replace(/\{(move|up|down|left|right|dash|charge|skill)\}/g, (m, a) =>
+      a === 'move' ? ['up', 'left', 'down', 'right'].map((x) => hud.keyFor(x, false)).join('') : hud.keyFor(a, false));
+  };
 
   BR.HUD = HUD;
 })();

@@ -11,12 +11,12 @@
 
   // Tutorial steps: event = what counts as progress, mode = what the dummy does
   const TUTORIAL = [
-    { text: 'WASD (또는 왼쪽 스틱)로 이동하세요', event: 'move', goal: 3 },
+    { text: '{move} (또는 왼쪽 스틱)로 이동하세요', event: 'move', goal: 3 },
     { text: '좌클릭을 꾹 눌러 허수아비를 공격하세요 — 마지막 타격은 강한 피니셔', event: 'finisher', goal: 2 },
-    { text: 'SPACE로 대시하세요 — 대시 중에는 무적입니다', event: 'dash', goal: 3 },
+    { text: '{dash}(으)로 대시하세요 — 대시 중에는 무적입니다', event: 'dash', goal: 3 },
     { text: '빨간 영역이 꽉 차기 전에 빠져나가세요', event: 'dodge', goal: 3, mode: 'dodge' },
-    { text: 'Q를 꾹 눌러 끝까지 충전한 뒤 떼세요', event: 'charge', goal: 1 },
-    { text: '공격이 닿기 직전(영역이 거의 찼을 때) E → PARRY!', event: 'parry', goal: 2, mode: 'parry' },
+    { text: '{charge}을(를) 꾹 눌러 끝까지 충전한 뒤 떼세요', event: 'charge', goal: 1 },
+    { text: '공격이 닿기 직전(영역이 거의 찼을 때) {skill} → PARRY!', event: 'parry', goal: 2, mode: 'parry' },
   ];
 
   class Game {
@@ -187,6 +187,7 @@
           if (this.stateTimer >= R.victoryDelay) {
             if (this.run.mode === 'practice') this.showPracticeResult(true);
             else if (this.run.isComplete) this.showResult(true);
+            else if (this.run.rush) this._rushNext();
             else this.showReward();
           }
           break;
@@ -259,6 +260,52 @@
       this.beginBoss(this.run.firstBossId());
     }
 
+    // Boss Rush: all 12 bosses in a fixed order, no upgrades, base stats only (fair times)
+    startRush(characterId) {
+      BR.UIRoot.clear();
+      this.paused = false;
+      this.tutorial = null;
+      let character = BR.CHARACTER_BY_ID[characterId] || BR.CHARACTERS[0];
+      if (!BR.isCharacterUnlocked(character, this.saveData)) character = BR.CHARACTERS[0];
+      this.saveData.settings.lastCharacter = character.id;
+      this.run = new BR.RunSystem(BR.DIFFICULTY_BY_ID.normal, character, {});
+      this.run.rush = true;
+      this.run.rushOrder = BR.RUSH_ORDER.slice();
+      this.run.eliteChance = 0;
+      this.run.rerolls = 0;
+      this.player = new BR.Player(this, BR.UpgradeSystem.createBaseStats({}, character), character);
+      this.saveData.stats.runs++;
+      BR.SaveSystem.save(this.saveData);
+      BR.SaveSystem.clearRun();
+      this.beginBoss(this.run.rushOrder[0]);
+    }
+
+    _rushNext() {
+      const s = this.player.stats;
+      this.player.heal(s.maxHp * R.rushHealRatio);
+      this.beginBoss(this.run.nextBossOptions()[0]);
+    }
+
+    // Local top-10 per difficulty (+ Boss Rush). Returns the rank (1..10) or 0.
+    recordLeaderboard(cleared) {
+      const r = this.run;
+      if (!r || r.mode !== 'run' || r.daily) return 0;
+      const key = r.rush ? 'rush' : r.difficulty.id;
+      const board = this.saveData.stats.leaderboard;
+      const list = board[key] || [];
+      const d = new Date();
+      const entry = {
+        cleared, stage: r.stage, time: Math.round(r.time), character: r.character.id,
+        mods: r.modifiers.map((m) => m.id), date: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`,
+        id: Date.now(),
+      };
+      list.push(entry);
+      list.sort((a, b) => (b.cleared - a.cleared) || (a.cleared ? a.time - b.time : (b.stage - a.stage) || (a.time - b.time)));
+      board[key] = list.slice(0, 10);
+      const rank = board[key].findIndex((e) => e.id === entry.id) + 1;
+      return rank;
+    }
+
     _applyModifiers(ids) {
       for (const id of ids || []) {
         const m = BR.MODIFIER_BY_ID[id];
@@ -308,7 +355,7 @@
         upgrades: Object.assign({}, r.upgrades), upgradeOrder: r.upgradeOrder.slice(),
         relics: r.relics.map((x) => x.id), relicOffered: Object.assign({}, r.relicOffered),
         rerolls: r.rerolls, soulEarned: r.soulEarned, time: r.time,
-        modifiers: r.modifiers.map((m) => m.id), daily: r.daily, seed: r.seed,
+        modifiers: r.modifiers.map((m) => m.id), daily: r.daily, seed: r.seed, rush: r.rush,
         rngState: r.rng.getState ? r.rng.getState() : null,
         damageDealt: r.damageDealt, damageTaken: r.damageTaken, phoenixUsed: r.phoenixUsed || 0,
         hp: Math.round(p.hp), theme: this.theme,
@@ -325,9 +372,15 @@
       this.tutorial = null;
       const character = BR.CHARACTER_BY_ID[c.character] || BR.CHARACTERS[0];
       const difficulty = BR.DIFFICULTY_BY_ID[c.difficulty] || BR.DIFFICULTY_BY_ID.normal;
-      const run = new BR.RunSystem(difficulty, character, this.saveData.meta);
+      const meta = c.rush ? {} : this.saveData.meta; // Boss Rush ignores permanent upgrades
+      const run = new BR.RunSystem(difficulty, character, meta);
       this.run = run;
-      this.player = new BR.Player(this, BR.UpgradeSystem.createBaseStats(this.saveData.meta, character), character);
+      this.player = new BR.Player(this, BR.UpgradeSystem.createBaseStats(meta, character), character);
+      if (c.rush) {
+        run.rush = true;
+        run.rushOrder = BR.RUSH_ORDER.slice();
+        run.eliteChance = 0;
+      }
       if (c.daily && c.seed !== null && c.seed !== undefined) {
         run.daily = c.daily;
         run.seed = c.seed;
@@ -472,7 +525,7 @@
       ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
       Draw.text(ctx, `STEP ${t.step + 1} / ${TUTORIAL.length}`, x + 14, y + 16, { size: 11, align: 'left', color: '#7dffa0', weight: '800' });
       Draw.text(ctx, `${Math.min(t.count, step.goal)} / ${step.goal}`, x + w - 14, y + 16, { size: 12, align: 'right', color: '#fff', weight: '800' });
-      Draw.text(ctx, step.text, C.WIDTH / 2, y + 42, { size: 17, color: '#ffffff', weight: '700' });
+      Draw.text(ctx, BR.fillKeys(step.text), C.WIDTH / 2, y + 42, { size: 17, color: '#ffffff', weight: '700' });
       ctx.fillStyle = '#7dffa0';
       ctx.fillRect(x, y + h - 3, w * Math.min(1, t.count / step.goal), 3);
       ctx.restore();
@@ -503,7 +556,7 @@
         syn.apply(this.player.stats, this.player);
         this.player.onStatsChanged();
         if (!silent) {
-          this.toasts.push({ title: syn.name, desc: syn.desc, icon: '⚡', time: 0, duration: 3.2, label: 'SYNERGY UNLOCKED' });
+          this.toasts.push({ title: syn.name, desc: BR.fillKeys(syn.desc), icon: '⚡', time: 0, duration: 3.2, label: 'SYNERGY UNLOCKED' });
           this.audio.play('clear');
         }
       }
@@ -646,6 +699,14 @@
       const st = this.saveData.stats;
       st.totalDamage += this.run.damageDealt;
       st.damageTaken += this.run.damageTaken;
+      if (this.run.rush) {
+        st.rushBestStage = Math.max(st.rushBestStage || 0, this.run.stage);
+        if (cleared && (!st.rushBest.time || this.run.time < st.rushBest.time)) {
+          st.rushBest = { time: Math.round(this.run.time), character: this.run.character.id };
+        }
+      }
+      this.lastRank = this.recordLeaderboard(cleared);
+      this.checkAchievements();
       if (this.run.daily) {
         // Best daily result: clears beat non-clears, then faster clear / deeper stage
         const prev = st.daily[this.run.daily];

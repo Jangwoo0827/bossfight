@@ -24,8 +24,8 @@
             <div class="hotkey">${i + 1}</div>
             <div class="tag">${BR.CATEGORY_LABELS[u.category] || ''} · ${u.rarity}</div>
             <div class="name">${esc(u.name)}</div>
-            <div class="desc">${esc(u.desc).replace(/\n/g, '<br>')}</div>
-            ${syn ? `<div class="syn-tag">⚡ SYNERGY: ${esc(syn.name)}<br><small>${esc(syn.desc)}</small></div>` : ''}
+            <div class="desc">${BR.fillKeys(esc(u.desc)).replace(/\n/g, '<br>')}</div>
+            ${syn ? `<div class="syn-tag">⚡ SYNERGY: ${esc(syn.name)}<br><small>${BR.fillKeys(esc(syn.desc))}</small></div>` : ''}
             <div class="stack">${stacks > 0 ? `보유 ${stacks} / ${u.maxStacks}` : 'NEW'}</div>
           </div>`;
       }).join('');
@@ -89,7 +89,7 @@
           <div class="relic-icon">${r.icon}</div>
           <div class="tag">RELIC</div>
           <div class="name">${esc(r.name)}</div>
-          <div class="desc">${esc(r.desc).replace(/\n/g, '<br>')}</div>
+          <div class="desc">${BR.fillKeys(esc(r.desc)).replace(/\n/g, '<br>')}</div>
         </div>`).join('');
       const panel = BR.UIRoot.show('dim', `
         <div class="heading" style="color:#ffb35e">RELIC FOUND</div>

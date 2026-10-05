@@ -2,6 +2,22 @@
 
 The in-game version of this list is under **PATCH NOTES** on the main menu (`js/data/patchNotes.js`).
 
+## v1.8.0 — Gauntlet
+
+### NEW
+- BOSS RUSH 모드 — 12마리 연속 · 업그레이드 없음 · 영구 강화 미적용 순수 실력 타임어택 (이어하기 지원)
+- 로컬 리더보드 — 난이도별 + BOSS RUSH TOP 10 (RECORDS → LEADERBOARD), 결과 화면에 NEW RECORD 표시
+- 결과 COPY RESULT — "🟩🟩🟩💀⬜ 3/5 · 6:32" 형태로 결과를 복사해 공유
+- 앱처럼 설치 (PWA) — 휴대폰 홈 화면에 추가, 한 번 접속하면 오프라인 플레이
+- 업적 추가: Gauntlet (BOSS RUSH 클리어)
+
+### CHANGED
+- 메인 메뉴 · 튜토리얼 · 캐릭터 설명 · 업그레이드 · 유물 설명의 Q / E / SPACE 표기가 키 설정을 따른다
+- 자동 테스트에 화면 레이아웃 검사 추가 (모든 화면이 넓은 글꼴에서도 화면 안에 들어오는지)
+
+### FIXED
+- 빌드가 매우 클 때 일시정지 화면의 버튼이 화면 밖으로 밀리던 문제
+
 ## v1.7.1 — Shop Fix
 
 ### FIXED

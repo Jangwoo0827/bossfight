@@ -24,6 +24,18 @@
   // ---------- load the game ----------
   const html = await (await fetch('index.html', { cache: 'no-store' })).text();
   const srcs = [...html.matchAll(/<script src="([^"]+)"/g)].map((m) => m[1]).filter((s) => !s.includes('main.js'));
+  // same (versioned) stylesheet as the game, so layout tests measure the real CSS
+  const css = html.match(/<link rel="stylesheet" href="([^"]+)"/);
+  if (css) {
+    await new Promise((resolve) => {
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = css[1];
+      link.onload = resolve;
+      link.onerror = resolve;
+      document.head.appendChild(link);
+    });
+  }
   for (const src of srcs) {
     await new Promise((resolve, reject) => {
       const el = document.createElement('script');
@@ -200,6 +212,33 @@
     return { ok: before === after, detail: diff };
   });
 
+  await test('boss rush: 12 bosses in order, no rewards, base stats, leaderboard + resume', () => {
+    g.goToMenu();
+    g.saveData = BR.SaveSystem.reset();
+    g.saveData.meta.might = 5; // must NOT apply in rush
+    BR.UIRoot.clear();
+    g.startRush('blade');
+    const baseDmgMult = g.player.stats.damageMult;
+    const seen = [g.boss.id];
+    let rewardScreens = 0, resumed = false;
+    for (let i = 0; i < 400 && g.state !== 'result'; i++) {
+      step(30, null);
+      if (g.state === 'fight') killBoss();
+      if (g.state === 'reward') rewardScreens++;
+      if (g.state === 'intro' && g.boss && seen[seen.length - 1] !== g.boss.id) seen.push(g.boss.id);
+      if (!resumed && seen.length === 4 && g.state === 'intro') {
+        // save & continue mid-rush
+        g.goToMenu(); g.saveData = BR.SaveSystem.load(); g.resumeRun(); resumed = g.run.rush && g.boss.id === seen[3];
+      }
+    }
+    const ok = g.state === 'result' && JSON.stringify(seen) === JSON.stringify(BR.RUSH_ORDER) && rewardScreens === 0
+      && baseDmgMult === 1 && resumed && g.saveData.stats.leaderboard.rush && g.saveData.stats.leaderboard.rush.length === 1
+      && g.saveData.stats.rushBest.time > 0;
+    const detail = ok ? '' : JSON.stringify({ state: g.state, seen: seen.length, rewardScreens, baseDmgMult, resumed, lb: g.saveData.stats.leaderboard.rush });
+    g.saveData = BR.SaveSystem.reset();
+    return { ok, detail };
+  });
+
   await test('daily challenge is deterministic', () => {
     const trace = () => {
       BR.UIRoot.clear();
@@ -313,6 +352,93 @@
     p.aim = 0; g.combat.playerESkill(p, 'blink');
     const blinked = p.x - x0 > 150;
     return { ok: bombHit && blinked, detail: `bombHit=${bombHit} blinked=${blinked}` };
+  });
+
+  // ---------- layout: every screen fits in 1280x720, even with a wide fallback font ----------
+  function offscreen() {
+    const ov = document.querySelector('#ui-root .overlay');
+    if (!ov) return ['no overlay'];
+    const box = ov.getBoundingClientRect();
+    if (box.height < 100) return ['overlay not measurable'];
+    const k = 720 / box.height;
+    const bad = [];
+    for (const el of ov.querySelectorAll('*')) {
+      // elements inside a scrolling list may be off-screen; the list itself must fit
+      let scroller = null;
+      for (let p = el.parentElement; p && p !== ov; p = p.parentElement) {
+        const cs = getComputedStyle(p);
+        if (/(auto|scroll)/.test(cs.overflowY + cs.overflowX)) { scroller = p; break; }
+      }
+      if (scroller) continue;
+      const r = el.getBoundingClientRect();
+      if (r.width === 0 || r.height === 0) continue;
+      const top = (r.top - box.top) * k, bottom = (r.bottom - box.top) * k;
+      const left = (r.left - box.left) * k, right = (r.right - box.left) * k;
+      if (top < -1 || bottom > 721 || left < -1 || right > 1281) {
+        const label = (el.className && typeof el.className === 'string' ? '.' + el.className.split(' ')[0] : el.tagName) + (el.textContent || '').trim().slice(0, 18);
+        bad.push(`${label} [${Math.round(top)}..${Math.round(bottom)}]`);
+      }
+    }
+    return [...new Set(bad)].slice(0, 4);
+  }
+
+  await test('layout: every screen fits on screen (normal + wide font)', () => {
+    // fill the save so lists are as long as they get
+    g.goToMenu();
+    g.saveData = BR.SaveSystem.reset();
+    g.saveData.soul = 99999;
+    for (const d of BR.BOSS_DATA) { g.saveData.stats.bossKills[d.id] = 3; g.saveData.stats.bossDeaths[d.id] = 2; }
+    BR.UIRoot.clear();
+    g.startRun('blade', 'normal', ['fragile', 'tough', 'drought']);
+    step(20, null);
+    for (const u of BR.UPGRADES) g.run.addUpgrade(u);
+    for (const r of BR.RELICS.slice(0, 4)) g.run.relics.push(r);
+    g.run.synergies = BR.SYNERGIES.map((x) => x.id);
+    BR.SaveSystem.saveRun({ v: 1, phase: 'fight', bossId: 'swordKnight', stage: 0, difficulty: 'nightmare', character: 'guardian', daily: '2026-01-01' });
+    const ui = g.ui, m = ui.menu;
+    const synUp = BR.UPGRADES.find((u) => u.id === 'projspd');
+    const screens = {
+      main: () => m.showMain(),
+      runSetup: () => m.showRunSetup(),
+      daily: () => m.showDaily(),
+      practice: () => m.showPractice(),
+      shop: () => m.showShop(),
+      settings: () => m.showSettings(() => {}),
+      controls: () => m.showControls(() => {}),
+      saveCode: () => m.showSaveCode('export', () => {}),
+      patchNotes: () => m.showPatchNotes(),
+      records: () => ui.records.show(() => {}),
+      pause: () => m.showPause(),
+      reward: () => { g.run.upgrades.proj = 1; ui.reward.show([synUp, BR.UPGRADES[0], BR.UPGRADES.find((u) => u.id === 'laststand')], 999, 'CLOCKWORK WARDEN'); },
+      relic: () => ui.relic.show(BR.RELICS.slice(0, 4), () => {}),
+      bossSelect: () => ui.bossSelect.show(['clockworkWarden', 'westernShooter', 'stormCaller']),
+      result: () => ui.result.show(false),
+      tutorialDone: () => ui.result.showTutorialDone(),
+      rush: () => m.showRush(),
+      leaderboard: () => {
+        g.saveData.stats.leaderboard = { normal: Array.from({ length: 10 }, (_, i) => ({ cleared: i < 5, stage: 5 - (i % 5), time: 300 + i * 17, character: 'guardian', mods: ['fragile', 'tough', 'drought'], date: '2026-10-05', id: i })) };
+        ui.records.showLeaderboard(() => {}, 'normal');
+      },
+    };
+    const fails = [];
+    const wide = document.createElement('style');
+    wide.textContent = '#ui-root, #ui-root * { font-family: Verdana, "Malgun Gothic", sans-serif !important; }';
+    for (const font of ['normal', 'wide']) {
+      if (font === 'wide') document.head.appendChild(wide);
+      for (const [name, show] of Object.entries(screens)) {
+        BR.UIRoot.clear();
+        show();
+        const bad = offscreen();
+        if (bad.length) fails.push(`${name}(${font}): ${bad.join(' | ')}`);
+      }
+      if (font === 'wide') wide.remove();
+    }
+    window.removeEventListener('keydown', ui.reward.onKey);
+    window.removeEventListener('keydown', ui.result.onKey);
+    BR.SaveSystem.clearRun();
+    g.saveData = BR.SaveSystem.reset();
+    g.goToMenu();
+    return { ok: fails.length === 0, detail: fails.join(' || ') };
   });
 
   // ---------- dodge audit ----------

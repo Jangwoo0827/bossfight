@@ -25,6 +25,7 @@
     { id: 'char_arcanist', icon: '✶', name: 'Archmage', desc: 'ARCANIST로 클리어', progress: (s) => [s.clearsByCharacter.arcanist || 0, 1] },
     { id: 'char_guardian', icon: '■', name: 'Unbreakable', desc: 'IRON GUARDIAN으로 클리어', progress: (s) => [s.clearsByCharacter.guardian || 0, 1] },
 
+    { id: 'rush_clear', icon: '⚑', name: 'Gauntlet', desc: 'BOSS RUSH (12연전) 클리어', progress: (s) => [s.rushBest && s.rushBest.time ? 1 : 0, 1] },
     { id: 'parry_10', icon: '✦', name: 'Riposte', desc: 'PARRY 10회', progress: (s) => [s.parries, 10] },
     { id: 'parry_100', icon: '✧', name: 'Perfect Guard', desc: 'PARRY 100회', progress: (s) => [s.parries, 100] },
     { id: 'combo', icon: '≡', name: 'Combo Artist', desc: '피니셔 200회 적중', progress: (s) => [s.finishers, 200] },

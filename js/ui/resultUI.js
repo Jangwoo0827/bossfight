@@ -62,6 +62,22 @@
     return c;
   }
 
+  // Text summary for chats, e.g. "🟩🟩🟩💀⬜ 3/5"
+  function shareText(g, cleared) {
+    const run = g.run;
+    const marks = [];
+    for (let i = 0; i < run.totalBosses; i++) marks.push(i < run.stage ? '🟩' : (!cleared && i === run.stage ? '💀' : '⬜'));
+    const mode = run.rush ? 'BOSS RUSH' : run.daily ? `DAILY ${run.daily}` : run.difficulty.name;
+    const mods = run.modifiers.map((m) => `${m.icon} ${m.name}`).join(' ');
+    return [
+      `BOSS RUSH — ${cleared ? 'RUN CLEAR' : 'RUN FAILED'}`,
+      `${mode} · ${run.character.name}${mods ? ' · ' + mods : ''}`,
+      `${marks.join('')} ${run.stage}/${run.totalBosses} · ${formatTime(run.time)}`,
+      'https://jangwoo0827.github.io/bossfight/',
+    ].join('\n');
+  }
+  BR.shareText = shareText;
+
   function downloadCard(canvas) {
     canvas.toBlob((blob) => {
       if (!blob) return;
@@ -96,7 +112,8 @@
       const reached = cleared ? run.totalBosses : Math.min(run.bossNumber, run.totalBosses);
       const panel = BR.UIRoot.show('dim', `
         <div class="result-title ${cleared ? 'clear' : 'fail'}">${cleared ? 'RUN CLEAR' : 'RUN FAILED'}</div>
-        <div class="subheading" style="margin-bottom:4px;color:${run.difficulty.color}">${run.daily ? `DAILY ${run.daily} · ` : ''}${run.difficulty.name} · ${esc(run.character.name)}${run.modifiers.length ? ' · ' + run.modifiers.map((m) => m.icon + ' ' + esc(m.name)).join(' ') : ''}</div>
+        ${g.lastRank ? `<div class="rank-badge">NEW RECORD · #${g.lastRank} ${run.rush ? 'BOSS RUSH' : run.difficulty.name}</div>` : ''}
+        <div class="subheading" style="margin-bottom:4px;color:${run.difficulty.color}">${run.rush ? 'BOSS RUSH · ' : ''}${run.daily ? `DAILY ${run.daily} · ` : ''}${run.difficulty.name} · ${esc(run.character.name)}${run.modifiers.length ? ' · ' + run.modifiers.map((m) => m.icon + ' ' + esc(m.name)).join(' ') : ''}</div>
         <div class="subheading">${cleared ? 'The Abyss falls silent.' : (killer ? `Slain by ${esc(killer.name)}${killer.hp > 0 ? ` · 남은 HP ${Math.round((killer.hp / killer.maxHp) * 100)}%` : ''}` : '')}</div>
         <div class="result-stats">
           <div class="result-stat"><div class="v">${reached} / ${run.totalBosses}</div><div class="k">Boss Reached</div></div>
@@ -109,6 +126,7 @@
         <div class="hint-line">${hint}</div>
         <div class="btn-row">
           <button class="btn primary" data-action="retry">Try Again</button>
+          <button class="btn" data-action="copy">Copy Result</button>
           <button class="btn" data-action="share">Save Image</button>
           <button class="btn" data-action="shop">Upgrades (${g.saveData.soul} Soul)</button>
           <button class="btn" data-action="menu">Main Menu</button>
@@ -120,6 +138,13 @@
           g.audio.play('button');
           const action = el.dataset.action;
           if (action === 'share') { downloadCard(makeShareCard(g, cleared)); return; }
+          if (action === 'copy') {
+            const text = shareText(g, cleared);
+            const done = () => { el.textContent = 'Copied!'; };
+            if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, done);
+            else done();
+            return;
+          }
           this.hide();
           if (action === 'retry') this._retry(run);
           else if (action === 'shop') g.goToMenu('shop');
@@ -176,6 +201,7 @@
     }
 
     _retry(run) {
+      if (run.rush) { this.game.startRush(run.character.id); return; }
       this.game.startRun(run.character.id, run.difficulty.id, run.modifiers.map((m) => m.id), { daily: !!run.daily });
     }
 

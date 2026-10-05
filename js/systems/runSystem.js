@@ -13,6 +13,8 @@
       this.difficulty = difficulty || BR.DIFFICULTY_BY_ID.normal;
       this.character = character || BR.CHARACTERS[0];
       this.mode = 'run';           // 'run' | 'practice' | 'tutorial'
+      this.rush = false;           // Boss Rush: fixed 12-boss order, no rewards
+      this.rushOrder = null;
       this.rng = Math.random;      // seeded for daily runs
       this.seed = null;
       this.daily = null;           // 'YYYY-MM-DD' for daily challenge runs
@@ -38,13 +40,14 @@
     }
 
     get bossNumber() { return this.stage + 1; }
-    get totalBosses() { return this.difficulty.bosses; }
+    get totalBosses() { return this.rush ? this.rushOrder.length : this.difficulty.bosses; }
     get isComplete() { return this.defeated.includes(R.finalBoss); }
 
     firstBossId() { return R.firstBoss; }
 
     // Knight first, final boss last; in between, choose from up to 3 random pool bosses
     nextBossOptions() {
+      if (this.rush) return [this.rushOrder[Math.min(this.stage, this.rushOrder.length - 1)]];
       if (this.stage === 0) return [R.firstBoss];
       if (this.stage >= this.totalBosses - 1) return [R.finalBoss];
       const remaining = BR.BOSS_DATA
@@ -79,7 +82,7 @@
 
     // Relics are offered after the 1st boss and right before the final boss
     shouldOfferRelic() {
-      if (this.mode !== 'run' || this.isComplete) return false;
+      if (this.mode !== 'run' || this.rush || this.isComplete) return false;
       if (this.stage !== 1 && this.stage !== this.totalBosses - 1) return false;
       return !this.relicOffered[this.stage] && this.availableRelics().length > 0;
     }

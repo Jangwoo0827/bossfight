@@ -77,12 +77,46 @@
             <div class="ach-grid">${achCards}</div>
           </div>
         </div>
-        <div class="btn-row" style="margin-top:14px"><button class="btn" data-action="back">Back</button></div>
+        <div class="btn-row" style="margin-top:14px"><button class="btn" data-action="back">Back</button><button class="btn" data-action="board">Leaderboard</button></div>
       `);
       panel.querySelector('[data-action="back"]').addEventListener('click', () => {
         g.audio.play('button');
         onBack();
       });
+      panel.querySelector('[data-action="board"]').addEventListener('click', () => {
+        g.audio.play('button');
+        this.showLeaderboard(() => this.show(onBack), 'normal');
+      });
+    }
+
+    showLeaderboard(onBack, tab) {
+      const g = this.game;
+      const esc = BR.escapeHtml;
+      const board = g.saveData.stats.leaderboard || {};
+      const tabs = [...BR.DIFFICULTIES.map((d) => ({ id: d.id, name: d.name, color: d.color })), { id: 'rush', name: 'BOSS RUSH', color: '#ffd76a' }];
+      const list = board[tab] || [];
+      const total = tab === 'rush' ? BR.RUSH_ORDER.length : (BR.DIFFICULTY_BY_ID[tab] || {}).bosses;
+      const rows = list.length ? list.map((e, i) => `
+        <div class="lb-row ${i === 0 ? 'top' : ''}">
+          <span class="lb-rank">#${i + 1}</span>
+          <span class="lb-res ${e.cleared ? 'clear' : ''}">${e.cleared ? 'CLEAR' : `BOSS ${e.stage}/${total}`}</span>
+          <span class="lb-time">${fmtTime(e.time)}</span>
+          <span class="lb-char">${esc((BR.CHARACTER_BY_ID[e.character] || {}).name || e.character)}</span>
+          <span class="lb-mods">${(e.mods || []).map((m) => (BR.MODIFIER_BY_ID[m] || {}).icon || '').join(' ')}</span>
+          <span class="lb-date">${esc(e.date || '')}</span>
+        </div>`).join('') : '<div class="lb-empty">아직 기록이 없습니다 — 첫 기록을 세워보세요</div>';
+      const panel = BR.UIRoot.show('dim', `
+        <div class="heading">LEADERBOARD</div>
+        <div class="subheading">이 기기의 최고 기록 TOP 10 · 클리어 시간 순 (미클리어는 도달한 보스 순)</div>
+        <div class="seg lb-tabs">${tabs.map((t) => `<button class="btn ${t.id === tab ? 'active' : ''}" style="--accent:${t.color}" data-tab="${t.id}">${t.name}</button>`).join('')}</div>
+        <div class="lb-list">${rows}</div>
+        <div class="btn-row" style="margin-top:14px"><button class="btn" data-action="back">Back</button></div>
+      `);
+      panel.querySelectorAll('[data-tab]').forEach((el) => el.addEventListener('click', () => {
+        g.audio.play('button');
+        this.showLeaderboard(onBack, el.dataset.tab);
+      }));
+      panel.querySelector('[data-action="back"]').addEventListener('click', () => { g.audio.play('button'); onBack(); });
     }
   }
 

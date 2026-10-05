@@ -16,5 +16,9 @@
     const game = new BR.Game(canvas);
     BR.game = game; // handy for debugging from the console
     game.start();
+    // PWA: installable + offline after the first visit (only over http/https, not file://)
+    if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+      navigator.serviceWorker.register('sw.js').catch(() => { /* optional */ });
+    }
   });
 })();

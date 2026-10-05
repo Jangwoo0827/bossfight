@@ -401,3 +401,25 @@ body { touch-action: none; }
 .shop-grid::-webkit-scrollbar-thumb { background: rgba(185,150,255,0.45); }
 .shop-grid::-webkit-scrollbar-track { background: rgba(255,255,255,0.04); }
 .shop-note { margin-top: 12px; }
+/* Pause: a huge build scrolls instead of pushing the buttons off screen */
+.pause-build .build-chips { max-height: 150px; overflow-y: auto; align-content: flex-start; padding-right: 4px; }
+.pause-build .build-chips::-webkit-scrollbar { width: 6px; }
+.pause-build .build-chips::-webkit-scrollbar-thumb { background: rgba(185,150,255,0.45); }
+
+/* ---------- v1.8: Boss Rush, leaderboard ---------- */
+.rush-order { width: 900px; display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.rush-boss { font-size: 12px; padding: 5px 9px; background: rgba(20,14,32,0.9); border-left: 3px solid var(--accent); color: #e9e6f2; }
+.rush-best { width: 420px; margin-top: 14px; background: rgba(20,14,32,0.9); border: 1px solid rgba(255,215,106,0.35); padding: 10px 16px; }
+.rank-badge { padding: 4px 14px; margin-bottom: 8px; font-size: 13px; font-weight: 800; letter-spacing: 2px; color: #1a0e00; background: #ffd76a; }
+.lb-tabs { margin-bottom: 12px; }
+.lb-tabs .btn.active { background: color-mix(in srgb, var(--accent) 35%, #1a1028); border-color: var(--accent); }
+.lb-list { width: 760px; max-height: 400px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
+.lb-row { display: grid; grid-template-columns: 50px 130px 80px 170px 1fr 110px; align-items: center; padding: 8px 14px; background: rgba(20,14,32,0.88); border: 1px solid rgba(255,255,255,0.06); font-size: 14px; color: #d8d1ea; }
+.lb-row.top { border-color: rgba(255,215,106,0.55); background: linear-gradient(90deg, rgba(80,60,20,0.6), rgba(20,14,32,0.88)); }
+.lb-rank { font: 700 18px Georgia, serif; color: #fff; }
+.lb-res { font-weight: 800; color: #ff8da0; }
+.lb-res.clear { color: #7dffa0; }
+.lb-time { color: #fff; font-weight: 700; }
+.lb-mods { color: #ff8da0; }
+.lb-date { color: #8d86a6; font-size: 12px; text-align: right; }
+.lb-empty { padding: 40px; text-align: center; color: #8d86a6; }

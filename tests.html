@@ -4,8 +4,12 @@
   <meta charset="UTF-8">
   <title>BOSS RUSH — Tests</title>
   <style>
+    html, body { overflow: auto !important; height: auto !important; user-select: text !important; }
     body { background: #0b0812; color: #ddd; font: 13px Consolas, monospace; margin: 0; padding: 16px; }
-    #stage { display: none; }
+    /* rendered off-screen (not display:none) so layout can be measured */
+    #stage { position: absolute; left: -99999px; top: 0; width: 1280px; height: 720px; }
+    #game-wrap { position: relative; width: 1280px; height: 720px; }
+    #ui-root { position: absolute; inset: 0; }
     h1 { font: 700 20px Georgia, serif; color: #fff; margin: 0 0 10px; }
     .pass { color: #7dffa0; } .fail { color: #ff6a80; } .warn { color: #ffd76a; }
     pre { white-space: pre-wrap; line-height: 1.5; }

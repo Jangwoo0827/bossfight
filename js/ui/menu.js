@@ -50,17 +50,22 @@
           <button class="btn ${BR.SaveSystem.loadRun() ? '' : 'primary'}" data-action="start">${BR.SaveSystem.loadRun() ? 'New Run' : 'Start Run'}</button>
           <div class="btn-split">
             <button class="btn" data-action="daily">Daily</button>
+            <button class="btn" data-action="rush">Boss Rush</button>
+          </div>
+          <div class="btn-split">
             <button class="btn" data-action="practice">Practice</button>
             <button class="btn" data-action="tutorial">Tutorial</button>
           </div>
           <button class="btn" data-action="shop">Upgrades</button>
-          <button class="btn" data-action="records">Records</button>
-          <button class="btn" data-action="settings">Settings</button>
+          <div class="btn-split">
+            <button class="btn" data-action="records">Records</button>
+            <button class="btn" data-action="settings">Settings</button>
+          </div>
           <button class="btn small" data-action="notes">Patch Notes${g.saveData.settings.lastSeenVersion !== BR.GAME_VERSION ? ' <span class="new-badge">NEW</span>' : ''}</button>
         </div>
         <div class="controls">
-          <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 이동 &nbsp; <kbd>마우스</kbd> 조준 &nbsp; <kbd>좌클릭</kbd> 공격 (근접 베기 + 검기)<br>
-          <kbd>SPACE</kbd> 대시 (무적) &nbsp; <kbd>Q</kbd> 꾹 눌러 충전 스킬 &nbsp; <kbd>E</kbd> 캐릭터 스킬 (타이밍 맞추면 PARRY) &nbsp; <kbd>ESC</kbd> 일시정지
+          ${['up', 'left', 'down', 'right'].map((a) => `<kbd>${escapeHtml(g.hud.keyFor(a, false))}</kbd>`).join('')} 이동 &nbsp; <kbd>마우스</kbd> 조준 &nbsp; <kbd>좌클릭</kbd> 공격<br>
+          <kbd>${escapeHtml(g.hud.keyFor('dash', false))}</kbd> 대시 (무적) &nbsp; <kbd>${escapeHtml(g.hud.keyFor('charge', false))}</kbd> 꾹 눌러 충전 스킬 &nbsp; <kbd>${escapeHtml(g.hud.keyFor('skill', false))}</kbd> 캐릭터 스킬 (타이밍 맞추면 PARRY) &nbsp; <kbd>ESC</kbd> 일시정지
         </div>
         <div class="menu-footer">
           v${BR.GAME_VERSION} · RUNS ${st.runs} · CLEARS ${st.clears} · BEST ${st.bestStage} / ${BR.CONFIG.RUN.totalBosses}<br>
@@ -75,6 +80,7 @@
         },
         practice: () => this.showPractice(),
         daily: () => this.showDaily(),
+        rush: () => this.showRush(),
         continue: () => g.resumeRun(),
         tutorial: () => g.startTutorial(),
         shop: () => this.showShop(),
@@ -133,6 +139,36 @@
         back: () => this.showMain(),
         go: () => g.startRun(charId, 'normal', [], { daily: true }),
       });
+    }
+
+    // Boss Rush: 12 bosses, no upgrades, time attack
+    showRush() {
+      const g = this.game;
+      const esc = escapeHtml;
+      const st = g.saveData.stats;
+      const lastC = BR.CHARACTER_BY_ID[g.saveData.settings.lastCharacter];
+      let charId = lastC && BR.isCharacterUnlocked(lastC, g.saveData) ? lastC.id : 'blade';
+      const fmt = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+      const best = st.rushBest && st.rushBest.time
+        ? `${fmt(st.rushBest.time)} · ${esc((BR.CHARACTER_BY_ID[st.rushBest.character] || {}).name || '')}`
+        : (st.rushBestStage ? `최고 ${st.rushBestStage} / ${BR.RUSH_ORDER.length} 처치` : '기록 없음');
+      const order = BR.RUSH_ORDER.map((id, i) => `<span class="rush-boss" style="--accent:${BR.BOSS_BY_ID[id].color}">${i + 1}. ${esc(BR.BOSS_BY_ID[id].name)}</span>`).join('');
+      const charBtns = BR.CHARACTERS.filter((c) => BR.isCharacterUnlocked(c, g.saveData)).map((c) => `<button class="btn small" data-char="${c.id}">${esc(c.name)}</button>`).join('');
+      const panel = UIRoot.show('dim', `
+        <div class="heading">BOSS RUSH</div>
+        <div class="subheading">12마리 연속 · 업그레이드 없음 · 영구 강화 미적용 · 보스 사이 체력 50% 회복 · 순수 실력 타임어택</div>
+        <div class="rush-order">${order}</div>
+        <div class="daily-rows rush-best"><div class="rec-row"><span>Best Time</span><b>${best}</b></div></div>
+        <div class="practice-row" style="margin-top:16px"><span>CHARACTER</span><div class="seg">${charBtns}</div></div>
+        <div class="btn-row" style="margin-top:18px">
+          <button class="btn" data-action="back">Back</button>
+          <button class="btn primary" data-action="go" style="min-width:220px">Start Rush</button>
+        </div>
+      `);
+      const refresh = () => panel.querySelectorAll('[data-char]').forEach((el) => el.classList.toggle('active', el.dataset.char === charId));
+      panel.querySelectorAll('[data-char]').forEach((el) => el.addEventListener('click', () => { charId = el.dataset.char; g.audio.play('button'); refresh(); }));
+      refresh();
+      this._bind(panel, { back: () => this.showMain(), go: () => g.startRush(charId) });
     }
 
     showTutorialOffer() {
@@ -238,7 +274,7 @@
               <span>CLEARS <b>${clears}</b></span>
             </div>
             <div class="desc">${esc(c.desc)}</div>
-            <ul class="skill-list">${c.skills.map((k) => `<li>${esc(k)}</li>`).join('')}</ul>
+            <ul class="skill-list">${c.skills.map((k) => `<li>${BR.fillKeys(esc(k))}</li>`).join('')}</ul>
           </div>`;
       }).join('');
       const diffButtons = BR.DIFFICULTIES.map((d) => {
@@ -322,7 +358,7 @@
         return `
           <div class="shop-item">
             <div class="name">${escapeHtml(def.name)}</div>
-            <div class="desc">${escapeHtml(def.desc)} / 레벨</div>
+            <div class="desc">${BR.fillKeys(escapeHtml(def.desc))} / 레벨</div>
             <div class="pips">${pips}</div>
             <div class="row">
               <span class="cost">${maxed ? 'MAX' : `${cost} SOUL`}</span>

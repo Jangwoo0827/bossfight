@@ -88,6 +88,7 @@ BR.CONFIG = {
     finalBoss: 'abyssLord',
     bossChoices: 3,
     eliteChance: 0.12,
+    rushHealRatio: 0.5,
     elite: { hp: 1.3, dmg: 1.1, tempo: 0.9, soul: 1.5 },
     healBetweenBossesRatio: 0.35,
     stageHpScale: 0.06,
