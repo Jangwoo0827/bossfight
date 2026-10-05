@@ -4,6 +4,20 @@
 
   BR.PATCH_NOTES = [
     {
+      version: '1.7.0',
+      title: 'Deeper Roots',
+      sections: [
+        ['NEW', [
+          'SOUL 영구 강화 8종 추가 (총 18종) — Lethality · Muscle Memory · Quickcast · Parry Instinct · Second Breath · Rare Finds · Guardian Spirit · Relic Hunter',
+          'RUN 업그레이드 8종 추가 (총 41종) — Wide Reach · Adrenaline · Quick Step · Reaper · Focused Mind · Amplify · Bounty Hunter · Last Stand',
+          '자동 테스트: 모든 영구 강화가 저장 → 새로고침 후 유지되는지, 모든 RUN 업그레이드 · 유물이 이어하기 후 똑같은지 매번 검사',
+        ]],
+        ['CHANGED', [
+          'SOUL 상점 5열 배치',
+        ]],
+      ],
+    },
+    {
       version: '1.6.2',
       title: 'Key Labels',
       sections: [

@@ -248,7 +248,7 @@
       this.player.hp = this.player.stats.maxHp;
       // Head Start: random upgrades before the first boss
       const head = BR.UpgradeSystem.metaValue(this.saveData.meta, 'headstart');
-      for (const up of BR.RewardSystem.roll(head, this.run.upgrades, this.run.rng)) {
+      for (const up of BR.RewardSystem.roll(head, this.run.upgrades, this.run.rng, this.run.rarityBoost)) {
         this.run.addUpgrade(up);
         BR.UpgradeSystem.apply(this.player.stats, up, this.player);
       }
@@ -510,6 +510,10 @@
     }
 
     onBossPhase(boss, phase) {
+      if (this.player && this.player.stats.phaseHeal) {
+        const healed = this.player.heal(this.player.stats.phaseHeal);
+        if (healed > 0) this.spawnText(this.player.x, this.player.y - 30, `+${Math.round(healed)}`, { color: '#7dffa0', size: 16 });
+      }
       const final = phase === boss.phaseThresholds.length + 1;
       const text = boss.id === 'abyssLord'
         ? (phase === 2 ? 'THE ABYSS AWAKENS' : 'FINAL DESPAIR')
@@ -605,7 +609,7 @@
       if (this.boss) this.lastBossName = this.boss.name;
       this.checkpoint('reward');
       if (this.run.shouldOfferRelic()) {
-        this.ui.relic.show(this.run.rollRelics(3), (relic) => {
+        this.ui.relic.show(this.run.rollRelics(this.run.relicChoices), (relic) => {
           this.acquireRelic(relic);
           this.checkpoint('reward');
           this._showUpgradeChoice();
@@ -616,7 +620,7 @@
     }
 
     _showUpgradeChoice() {
-      const choices = BR.RewardSystem.roll(3, this.run.upgrades, this.run.rng);
+      const choices = BR.RewardSystem.roll(3, this.run.upgrades, this.run.rng, this.run.rarityBoost);
       this.ui.reward.show(choices, this.lastSoulGain || 0, this.boss ? this.boss.name : (this.lastBossName || ''));
     }
 
@@ -626,7 +630,7 @@
       this.checkSynergies(false);
       // Recover between bosses
       const s = this.player.stats;
-      this.player.heal((this.run.noHeal ? 0 : s.maxHp * R.healBetweenBossesRatio) + s.healAfterBoss);
+      this.player.heal((this.run.noHeal ? 0 : s.maxHp * (R.healBetweenBossesRatio + (s.betweenHealBonus || 0))) + s.healAfterBoss);
       const options = this.run.nextBossOptions();
       if (options.length > 1) {
         this.state = 'select';

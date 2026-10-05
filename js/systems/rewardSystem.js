@@ -5,12 +5,12 @@
   const REPEAT_FALLOFF = 0.45;
 
   BR.RewardSystem = {
-    roll(count, taken, rng = Math.random) {
+    roll(count, taken, rng = Math.random, rarityBoost = 0) {
       const pool = BR.UPGRADES
         .filter((u) => (taken[u.id] || 0) < (u.maxStacks || 99))
         .map((u) => ({
           upgrade: u,
-          weight: (BR.RARITY_WEIGHTS[u.rarity] || 1) * Math.pow(REPEAT_FALLOFF, taken[u.id] || 0),
+          weight: (BR.RARITY_WEIGHTS[u.rarity] || 1) * (u.rarity !== 'common' ? 1 + rarityBoost : 1) * Math.pow(REPEAT_FALLOFF, taken[u.id] || 0),
         }));
 
       const result = [];

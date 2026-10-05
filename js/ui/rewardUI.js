@@ -43,7 +43,7 @@
           g.run.rerolls--;
           window.removeEventListener('keydown', this.onKey);
           g.audio.play('button');
-          this.show(BR.RewardSystem.roll(3, g.run.upgrades, g.run.rng), soulGained, bossName);
+          this.show(BR.RewardSystem.roll(3, g.run.upgrades, g.run.rng, g.run.rarityBoost), soulGained, bossName);
         });
       }
       panel.querySelectorAll('.card').forEach((el) => {

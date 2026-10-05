@@ -8,6 +8,8 @@
     constructor(difficulty, character, meta) {
       this.soulMult = 1 + BR.UpgradeSystem.metaValue(meta, 'fortune');
       this.rerolls = BR.UpgradeSystem.metaValue(meta, 'reroll');
+      this.rarityBoost = BR.UpgradeSystem.metaValue(meta, 'luck');
+      this.relicChoices = 3 + BR.UpgradeSystem.metaValue(meta, 'relichunter');
       this.difficulty = difficulty || BR.DIFFICULTY_BY_ID.normal;
       this.character = character || BR.CHARACTERS[0];
       this.mode = 'run';           // 'run' | 'practice' | 'tutorial'

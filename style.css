@@ -388,3 +388,10 @@ body { touch-action: none; }
 /* Settings: more rows */
 .settings-box { gap: 11px; padding: 20px 26px; width: 520px; }
 .keybtn { min-width: 150px; }
+
+/* SOUL shop: 18 items in 5 columns */
+.shop-grid { grid-template-columns: repeat(5, 228px); gap: 10px; }
+.shop-grid .shop-item { padding: 10px 12px; }
+.shop-grid .shop-item .name { font-size: 16px; }
+.shop-grid .shop-item .desc { font-size: 12px; margin: 3px 0 7px; min-height: 30px; }
+.shop-grid .shop-item .pip { width: 18px; }

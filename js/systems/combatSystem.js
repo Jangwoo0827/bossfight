@@ -158,7 +158,7 @@
       const g = this.game;
       const s = player.stats;
       const mult = finisher ? AT.finisherMult : 1;
-      const range = P.slashRange * (finisher ? 1.25 : 1);
+      const range = P.slashRange * (finisher ? 1.25 : 1) * (s.meleeRangeMult || 1);
       const arc = P.slashArc * (finisher ? 1.3 : 1);
       const hit = this._meleeCone(player, angle, range, arc, s.damage * mult, { finisher });
 
@@ -186,7 +186,7 @@
       const speed = G.speed * s.projectileSpeedMult;
       const aim = angle + (Math.random() - 0.5) * 2 * G.jitter;
       this._spawnPlayerProjectiles(player, aim, s.projectileCount, G.spread, {
-        kind: finisher ? 'bigBullet' : 'bullet', speed, radius: finisher ? 9 : G.radius,
+        kind: finisher ? 'bigBullet' : 'bullet', speed, radius: (finisher ? 9 : G.radius) * (s.meleeRangeMult || 1),
         damage: s.damage * (finisher ? 2.6 : 1), life: (G.range * s.projectileRangeMult) / speed,
         pierce: finisher || s.wavePierce, isFinisher: finisher, color: player.character.rgb,
       });
@@ -203,7 +203,7 @@
       const speed = 520 * s.projectileSpeedMult;
       const count = s.projectileCount + (finisher ? 2 : 0);
       this._spawnPlayerProjectiles(player, angle, count, finisher ? 0.35 : 0.18, {
-        kind: 'orb', speed, radius: finisher ? 9 : 7, damage: s.damage * (finisher ? 1.2 : 1),
+        kind: 'orb', speed, radius: (finisher ? 9 : 7) * (s.meleeRangeMult || 1), damage: s.damage * (finisher ? 1.2 : 1),
         life: (600 * s.projectileRangeMult) / speed, homing: 3.2, pierce: !!s.wavePierce,
         isFinisher: finisher, color: player.character.rgb,
       });
@@ -241,7 +241,7 @@
       const H = AT.hammer;
       if (finisher) {
         // Ground quake around the player
-        const r = H.quakeRadius;
+        const r = H.quakeRadius * (s.meleeRangeMult || 1);
         const boss = g.boss;
         if (boss && boss.isHittable() && Geo.dist(player.x, player.y, boss.x, boss.y) <= r + boss.radius) {
           const a = Geo.angle(player.x, player.y, boss.x, boss.y);
@@ -259,9 +259,10 @@
         g.camera.shakePreset('medium');
         g.audio.play('explosion');
       } else {
-        const hit = this._meleeCone(player, angle, H.range, H.arc, s.damage, {});
+        const hRange = H.range * (s.meleeRangeMult || 1);
+        const hit = this._meleeCone(player, angle, hRange, H.arc, s.damage, {});
         g.effects.push(new BR.SlashFx({
-          x: player.x, y: player.y, angle, radius: H.range * 0.8, arc: H.arc, dir: side, follow: player,
+          x: player.x, y: player.y, angle, radius: hRange * 0.8, arc: H.arc, dir: side, follow: player,
           color: '190,255,170', width: 26, life: 0.18,
         }));
         const skip = hit.targets.slice();
@@ -373,7 +374,8 @@
       const g = this.game;
       const s = player.stats;
       const boss = g.boss;
-      const N = SK.nova;
+      const sc = s.eSkillScale || 1;
+      const N = Object.assign({}, SK.nova, { radius: SK.nova.radius * sc, clearRadius: SK.nova.clearRadius * sc });
       player.iframes = Math.max(player.iframes, N.iframes);
       this._tryParry(player);
       g.effects.push(new BR.RingFx({ x: player.x, y: player.y, r0: 10, r1: N.radius, color: '120,230,255', width: 16, life: 0.35 }));
@@ -400,7 +402,7 @@
       const R = SK.roll;
       this._tryParry(player);
       const back = player.aim + Math.PI;
-      player.startBurst(Math.cos(back), Math.sin(back), R.distance, R.duration, R.iframes);
+      player.startBurst(Math.cos(back), Math.sin(back), R.distance * (s.eSkillScale || 1), R.duration, R.iframes);
       // Shotgun blast toward the aim
       const speed = AT.gun.speed * s.projectileSpeedMult;
       for (let i = 0; i < R.shots; i++) {
@@ -420,7 +422,8 @@
       const B = SK.blink;
       this._tryParry(player);
       const from = { x: player.x, y: player.y };
-      const to = Geo.clampToArena(player.x + Math.cos(player.aim) * B.distance, player.y + Math.sin(player.aim) * B.distance, player.radius);
+      const dist = B.distance * (player.stats.eSkillScale || 1);
+      const to = Geo.clampToArena(player.x + Math.cos(player.aim) * dist, player.y + Math.sin(player.aim) * dist, player.radius);
       g.particles.emit('magic', from.x, from.y, 16, { radius: 12 });
       for (let i = 1; i <= 6; i++) player.afterimages.push({ x: Geo.lerp(from.x, to.x, i / 7), y: Geo.lerp(from.y, to.y, i / 7), life: 0.3 });
       player.x = to.x;
@@ -433,7 +436,7 @@
 
     _bulwark(player) {
       const g = this.game;
-      player.bulwarkTimer = SK.bulwark.duration;
+      player.bulwarkTimer = SK.bulwark.duration * (player.stats.eSkillScale || 1);
       this._tryParry(player);
       g.effects.push(new BR.RingFx({ x: player.x, y: player.y, r0: 10, r1: 60, color: '157,255,138', width: 8, life: 0.3 }));
       g.audio.play('nova');
@@ -562,6 +565,13 @@
       const final = Math.max(1, Math.round(amount * (1 - p.stats.damageReduction) * (p.stats.damageTakenMult || 1)));
       p.hp -= final;
       if (g.run && g.run.mode === 'tutorial') p.hp = Math.max(1, p.hp);
+      // Last Stand: once per fight, dropping under 25% grants 2s of invulnerability
+      if (p.stats.lastStand && !p.lastStandUsed && p.hp > 0 && p.hp < p.stats.maxHp * 0.25) {
+        p.lastStandUsed = true;
+        p.iframes = 2;
+        g.spawnText(p.x, p.y - 40, 'LAST STAND', { color: '#ffd76a', size: 18, life: 1 });
+        g.effects.push(new BR.RingFx({ x: p.x, y: p.y, r0: 10, r1: 90, color: '255,215,106', width: 8, life: 0.5 }));
+      }
       p.iframes = P.hitIframes;
       p.hurtTimer = P.hitIframes;
       p.qCharge = -1;

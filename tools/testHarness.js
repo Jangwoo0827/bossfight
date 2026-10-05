@@ -157,6 +157,49 @@
     return { ok: before === after, detail: before === after ? '' : `\nbefore ${before}\nafter  ${after}` };
   });
 
+  await test('every permanent (SOUL) upgrade survives save → reload', () => {
+    g.goToMenu();
+    g.saveData = BR.SaveSystem.reset();
+    g.saveData.soul = 999999;
+    const bought = [];
+    for (const def of BR.META_UPGRADES) if (BR.UpgradeSystem.buyMeta(g.saveData, def.id)) bought.push(def.id);
+    g.saveData.meta.futureUpgrade = 3; // a key this version doesn't know must survive too
+    BR.SaveSystem.save(g.saveData);
+    const reloaded = BR.SaveSystem.load();
+    const lost = BR.META_UPGRADES.filter((d) => reloaded.meta[d.id] !== 1).map((d) => d.id);
+    const ok = bought.length === BR.META_UPGRADES.length && lost.length === 0 && reloaded.meta.futureUpgrade === 3
+      && reloaded.soul === g.saveData.soul;
+    g.saveData = BR.SaveSystem.reset();
+    return { ok, detail: ok ? '' : `bought ${bought.length}/${BR.META_UPGRADES.length}, lost: ${lost.join(',')}, future=${reloaded.meta.futureUpgrade}` };
+  });
+
+  await test('every run upgrade + relic survives save → continue (identical stats)', () => {
+    g.goToMenu();
+    g.saveData = BR.SaveSystem.reset();
+    BR.UIRoot.clear();
+    g.startRun('blade', 'normal', ['fragile']);
+    step(30, null);
+    for (const u of BR.UPGRADES) { g.run.addUpgrade(u); BR.UpgradeSystem.apply(g.player.stats, u, g.player); }
+    for (const r of BR.RELICS.slice(0, 3)) g.acquireRelic(r);
+    g.checkSynergies(true);
+    g.player.hp = 37;
+    g.checkpoint('fight', { bossId: g.boss.id, elite: false });
+    const snap = () => JSON.stringify({ stats: g.player.stats, ups: g.run.upgrades, relics: g.run.relics.map((r) => r.id),
+      syn: g.run.synergies.slice().sort(), soulMult: +g.run.soulMult.toFixed(4), rerolls: g.run.rerolls, ets: g.run.enemyTimeScale, hp: Math.round(g.player.hp) });
+    const before = snap();
+    g.goToMenu();
+    g.saveData = BR.SaveSystem.load();
+    g.resumeRun();
+    const after = snap();
+    let diff = '';
+    if (before !== after) {
+      const a = JSON.parse(before), b = JSON.parse(after);
+      for (const k of Object.keys(a.stats)) if (JSON.stringify(a.stats[k]) !== JSON.stringify(b.stats[k])) diff += ` stats.${k}: ${a.stats[k]} → ${b.stats[k]}`;
+      for (const k of ['ups', 'relics', 'syn', 'soulMult', 'rerolls', 'ets', 'hp']) if (JSON.stringify(a[k]) !== JSON.stringify(b[k])) diff += ` ${k}: ${JSON.stringify(a[k])} → ${JSON.stringify(b[k])}`;
+    }
+    return { ok: before === after, detail: diff };
+  });
+
   await test('daily challenge is deterministic', () => {
     const trace = () => {
       BR.UIRoot.clear();

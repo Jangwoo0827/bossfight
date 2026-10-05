@@ -55,6 +55,8 @@
       this.barrier = this.stats.barrier || 0;
       this.counterTimer = 0;
       this.lifestealAcc = 0;
+      this.hasteTimer = 0;
+      this.lastStandUsed = false;
       this.wasDash = false;
       this.dead = false;
     }
@@ -163,6 +165,7 @@
       this.bulwarkTimer -= dt;
       this.comboTimer -= dt;
       this.counterTimer -= dt;
+      this.hasteTimer -= dt;
       this.recoil = Math.max(0, this.recoil - dt * 8);
       this.energy = Math.min(P.maxEnergy, this.energy + P.energyRegen * this.stats.energyRegenMult * dt);
       if (this.lanceCharges < this.stats.skillCharges) {
@@ -184,6 +187,7 @@
       if (dx === 0 && dy === 0) { dx = Math.cos(this.aim); dy = Math.sin(this.aim); }
       this.startBurst(dx, dy, this.stats.dashDistance, P.dashDuration, P.dashIframes);
       this.wasDash = true;
+      if (this.stats.dashHaste) this.hasteTimer = 1.5;
       this.game.onTutorialEvent('dash');
       this.dashCooldownTimer = this.dashCooldown;
       this.dashBuffer = 0;
@@ -194,7 +198,8 @@
 
     _attack() {
       const frenzy = this.stats.bloodFrenzy && this.hp < this.stats.maxHp * 0.5 ? 1.35 : 1;
-      this.attackTimer = this.character.attackCooldown / (this.stats.attackSpeedMult * frenzy);
+      const haste = this.hasteTimer > 0 ? 1 + this.stats.dashHaste : 1;
+      this.attackTimer = this.character.attackCooldown / (this.stats.attackSpeedMult * frenzy * haste);
       if (this.comboTimer <= 0) this.comboStep = 0;
       this.comboStep++;
       const finisher = this.comboStep >= this.comboLength;
@@ -220,6 +225,9 @@
       if (this.lanceCharges === this.stats.skillCharges) this.lanceRecharge = this.lanceCooldown;
       this.lanceCharges--;
       this.game.combat.playerChargeSkill(this, this.aim, power);
+      if (power >= 1 && this.stats.chargeRefund) {
+        this.energy = Math.min(P.maxEnergy, this.energy + SK.charge.energyCost * this.stats.chargeRefund);
+      }
     }
 
     _castE() {

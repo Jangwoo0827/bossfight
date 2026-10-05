@@ -63,14 +63,14 @@ PARRY: the incoming attack is cancelled, you heal 8 HP, gain 25 energy, and your
 1. **Sword Knight** (fixed first boss: learn to read telegraphs)
 2. → Then you **choose the next boss** from 3 random picks out of the 10-boss pool. The number of choices depends on the difficulty. A boss picked later has a little more HP.
 3. → **Abyss Lord** is always the final boss (3 phases).
-- After each boss you **pick 1 of 3** run upgrades (33 kinds: attack, survival, movement, skill, technique, special) and recover 35% HP.
+- After each boss you **pick 1 of 3** run upgrades (41 kinds: attack, survival, movement, skill, technique, special) and recover 35% HP.
 - Technique upgrades: stronger finishers, shorter combos, faster charging, max-charge damage, parry healing, a damage buff after parries, and a shockwave when a dash ends.
 - Special upgrades: Glass Cannon, Phoenix Feather (one revive), Aegis (a barrier per fight), lifesteal and thorns.
 - **Relics**: choose 1 of 3 after the 1st boss and right before the final boss. They change the rules of the run (8 kinds: slow down boss time, burning, projectile reflection, ...).
 - **Synergies**: owning two specific upgrades unlocks an evolved effect automatically (8 kinds). Reward cards show a "⚡ SYNERGY" hint when picking them would complete one.
 - **Modifiers** (7 kinds): optional handicaps chosen before a run (faster bosses, less HP, no healing...). Each adds a SOUL bonus.
 - **Elite bosses**: 12% chance (HP +30%, faster, SOUL x1.5)
-- **SOUL** is earned per boss and kept after death. Spend it on 10 kinds of permanent upgrades in `UPGRADES` on the main menu (stats, more SOUL, reward rerolls, Head Start).
+- **SOUL** is earned per boss and kept after death. Spend it on 18 kinds of permanent upgrades in `UPGRADES` on the main menu (stats, more SOUL, reward rerolls, Head Start).
 
 ## How each boss is beaten
 
