@@ -57,7 +57,10 @@
         const j = Math.floor(this.rng() * (i + 1));
         [remaining[i], remaining[j]] = [remaining[j], remaining[i]];
       }
-      const options = remaining.slice(0, R.bossChoices);
+      // Apex (★6+) bosses only show up from the third fight, never on EASY
+      const apexOk = this.stage >= 2 && this.difficulty.id !== 'easy';
+      const gated = apexOk ? remaining : remaining.filter((id) => BR.BOSS_BY_ID[id].difficulty <= 5);
+      const options = (gated.length >= R.bossChoices ? gated : remaining).slice(0, R.bossChoices);
       return options.length ? options : [R.finalBoss];
     }
 

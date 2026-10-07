@@ -431,3 +431,7 @@ body { touch-action: none; }
 .tip-state { font-size: 12px; color: #9890b2; }
 .tip-state.buy { color: #7dffa0; } .tip-state.poor { color: #ff8da0; } .tip-state.owned { color: #ffd76a; }
 .tree-legend { display: flex; gap: 18px; font-size: 12px; letter-spacing: 2px; margin-top: 6px; }
+
+/* star ratings: yellow base, purple stars layered on top for 6-10 */
+.st { position: relative; display: inline-block; }
+.st .p { position: absolute; left: 0; top: 0; width: 100%; text-align: center; color: #c070ff; font-size: 0.62em; line-height: 1.6; text-shadow: 0 0 4px #7a30d0; }

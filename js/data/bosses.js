@@ -151,16 +151,41 @@
       tip: '중력 우물은 너를 끌어당긴다 — 달리면 벗어날 수 있다(대시는 끌림 무시). COLLAPSE가 뜨면 즉시 멀어져라.',
     },
     {
+      id: 'magmaTitan', name: 'MAGMA TITAN', title: 'Heart of the Furnace', hp: 8200, radius: 44, difficulty: 6, dmg: 1.2,
+      arena: 'burning', color: '#ff7a30', rgb: '255,122,48', spikes: 8, phaseThresholds: [0.55, 0.25],
+      tip: '용암 분출 줄은 예고된 한 방향으로 번진다 — 옆으로 빠져라. 가까이 있으면 충격파가 잦다.',
+    },
+    {
+      id: 'prismSeraph', name: 'PRISM SERAPH', title: 'Light Without Mercy', hp: 8800, radius: 32, difficulty: 7, dmg: 1.3,
+      arena: 'cosmos', color: '#7fffe8', rgb: '127,255,232', spikes: 5, phaseThresholds: [0.55, 0.25],
+      tip: '회전하는 빔은 한 방향으로 쓸어간다 — 빔이 닿기 전에 틈으로 먼저 들어가라. 2페이즈의 벽은 빈틈으로 미끄러져라.',
+    },
+    {
+      id: 'nightEmpress', name: 'NIGHT EMPRESS', title: 'Bloom of the Last Dusk', hp: 9000, radius: 34, difficulty: 7, dmg: 1.3,
+      arena: 'hive', color: '#c070ff', rgb: '192,112,255', spikes: 7, phaseThresholds: [0.55, 0.25],
+      tip: '독 가시는 오래 남아 바닥을 줄인다. 한곳에 머물지 말고 넓은 쪽으로 계속 이동하라.',
+    },
+    {
+      id: 'tideLeviathan', name: 'TIDE LEVIATHAN', title: 'Wrath of the Drowned Sea', hp: 9800, radius: 48, difficulty: 8, dmg: 1.4,
+      arena: 'void', color: '#60c8ff', rgb: '96,200,255', spikes: 9, phaseThresholds: [0.55, 0.25],
+      tip: '파도 벽은 빈틈 한 곳만 안전하다 — 다음 빈틈을 미리 보고 옆으로 이동하라. 소용돌이는 안쪽 고리 사이로.',
+    },
+    {
+      id: 'ruinKing', name: 'RUIN KING', title: 'He Who Ended the World', hp: 10800, radius: 38, difficulty: 9, dmg: 1.5,
+      arena: 'blood', color: '#ff2a3a', rgb: '255,42,58', spikes: 6, phaseThresholds: [0.55, 0.25],
+      tip: '순간이동 처형은 충격파와 베기가 동시에 온다 — 원 밖으로 빠진 뒤 선에서 비켜라. 템포가 매우 빠르다.',
+    },
+    {
       id: 'abyssLord',
       name: 'ABYSS LORD',
       title: 'Sovereign of the Deep',
-      hp: 6800,
+      hp: 12000,
       radius: 46,
-      difficulty: 5,
+      difficulty: 10, dmg: 1.7,
       arena: 'abyss',
       color: '#ff3d7f',
-      phaseThresholds: [0.65, 0.3],
-      tip: '최종 보스. 3단계 페이즈. 바둑판 공격은 안전한 칸을 찾아 이동하고, 마지막 30%는 패턴이 빨라지니 침착하게 읽어라.',
+      phaseThresholds: [0.72, 0.46, 0.2],
+      tip: '최종 보스 ★10. 4단계 페이즈, 마지막 20%는 LAST BREATH — 예고가 극단적으로 짧아진다. 한 번의 실수도 치명적이다.',
     },
   ];
 
@@ -177,12 +202,28 @@
     clockworkWarden: '네 시간은 이미 계산이 끝났다.',
     duneWyrm: '(모래 아래에서 무언가가 꿈틀거린다)',
     direAlpha: '(달을 향해 길게 울부짖는다)',
+    magmaTitan: '(용광로 같은 숨소리가 들린다)',
+    prismSeraph: '빛은 자비를 모른다.',
+    nightEmpress: '꽃은 지기 전에 가장 아름답지.',
+    tideLeviathan: '바다가 너를 기억한다.',
+    ruinKing: '세상을 끝낸 자 앞에서 무엇을 기대하지?',
     abyssLord: '여기까지 온 것은 칭찬하지. 하지만 심연은 바닥이 없다.',
     broodMother: '내 아이들이 배가 고프단다.',
     phantomLancer: '멈추는 법은 배우지 못했다.',
     gravitySage: '모든 것은 결국 떨어진다. 너도.',
+
   };
   for (const def of BR.BOSS_DATA) def.quote = QUOTES[def.id] || '';
+
+  // ★ rating: 1-5 yellow; 6-10 puts that many purple stars over the five yellow ones
+  BR.starsHtml = (d) => {
+    let h = '';
+    for (let i = 0; i < 5; i++) {
+      const on = i < Math.min(d, 5);
+      h += `<span class="st"><span style="${on ? '' : 'opacity:.25'}">★</span>${d > 5 && i < d - 5 ? '<span class="p">★</span>' : ''}</span>`;
+    }
+    return h;
+  };
 
   BR.BOSS_BY_ID = {};
   for (const def of BR.BOSS_DATA) BR.BOSS_BY_ID[def.id] = def;

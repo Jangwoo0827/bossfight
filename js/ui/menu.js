@@ -203,7 +203,7 @@
       const bossCards = BR.BOSS_DATA.map((b) => `
         <button class="pbtn" style="--accent:${b.color}" data-boss="${b.id}">
           <span class="pname">${esc(b.name)}</span>
-          <span class="pstars">${'★'.repeat(b.difficulty)}</span>
+          <span class="pstars">${BR.starsHtml(b.difficulty)}</span>
         </button>`).join('');
       const charBtns = BR.CHARACTERS.filter((c) => BR.isCharacterUnlocked(c, g.saveData)).map((c) => `<button class="btn small" style="--accent:${c.color}" data-char="${c.id}">${esc(c.name)}</button>`).join('');
       const panel = UIRoot.show('dim', `

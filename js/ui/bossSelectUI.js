@@ -17,7 +17,7 @@
       const cards = options.map((id, i) => {
         const def = BR.BOSS_BY_ID[id];
         const theme = BR.THEMES[def.arena];
-        const stars = '★'.repeat(def.difficulty) + '<span style="opacity:.25">' + '★'.repeat(5 - def.difficulty) + '</span>';
+        const stars = BR.starsHtml(def.difficulty);
         const hpMult = run.hpMultiplierFor(id);
         return `
           <div class="card" style="--accent:${def.color}" data-index="${i}">

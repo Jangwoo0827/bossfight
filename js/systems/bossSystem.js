@@ -17,7 +17,7 @@
       const E = R.elite;
       const boss = new Cls(game, def, {
         hpMult: (run ? run.hpMultiplierFor(id) : 1) * (elite ? E.hp : 1),
-        damageMult: (run ? run.damageMultiplier() : 1) * (elite ? E.dmg : 1),
+        damageMult: (run ? run.damageMultiplier() : 1) * (elite ? E.dmg : 1) * (def.dmg || 1),
       });
       if (elite) {
         boss.elite = true;

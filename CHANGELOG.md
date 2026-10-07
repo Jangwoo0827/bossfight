@@ -2,6 +2,16 @@
 
 The in-game version of this list is under **PATCH NOTES** on the main menu (`js/data/patchNotes.js`).
 
+## v1.12.0 — Purple Stars
+
+### NEW
+- APEX 보스 5종 추가 (총 20종) — 노란별 5개 위에 보라별이 겹치는 ★6~9 난이도: MAGMA TITAN · PRISM SERAPH · NIGHT EMPRESS · TIDE LEVIATHAN · RUIN KING
+- APEX 보스는 체력과 공격력이 더 높고 템포가 빠르다. 3번째 전투부터, EASY 제외 등장 (BOSS RUSH에는 모두 포함)
+- 새 공통 패턴 — 회전 빔 · 빈틈이 움직이는 벽(커튼) · 소용돌이 · 순간이동 처형
+
+### CHANGED
+- ABYSS LORD ★10 — 체력 12000 · 피해 ×1.7 · 4페이즈. 마지막 20%는 LAST BREATH: 예고가 극단적으로 짧고 연계가 끊기지 않는다
+
 ## v1.11.0 — Signature Moves
 
 ### NEW

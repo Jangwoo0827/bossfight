@@ -10,15 +10,16 @@
   const { Geo, Draw } = BR;
   const C = BR.CONFIG;
 
-  const PHASE_COLORS = ['255,40,110', '230,60,255', '255,90,70'];
+  const PHASE_COLORS = ['255,40,110', '230,60,255', '255,90,70', '255,255,255'];
 
   class AbyssLord extends BR.Boss {
     constructor(game, def, opts) {
       super(game, def, opts);
       this.baseSpeed = 70;
       this.speed = this.baseSpeed;
-      this.tempoByPhase = [1, 0.88, 0.76];
-      this.recoveryByPhase = [0.85, 0.62, 0.42];
+      this.rgb = '255,40,110';
+      this.tempoByPhase = [0.9, 0.78, 0.66, 0.56];
+      this.recoveryByPhase = [0.6, 0.42, 0.3, 0.18];
       this.eyeAngle = Math.PI / 2;
       this.ringSpin = 0;
       this.idleTimer = 1.4;
@@ -33,13 +34,19 @@
         { name: 'spiral', weight: 1.6, cooldown: 7, phase: 3, fn: this.atkSpiral },
         { name: 'cross', weight: 1.5, cooldown: 6, phase: 3, fn: this.atkCross },
         { name: 'combo', weight: 1.5, cooldown: 6, phase: 3, fn: this.atkCombo },
+        { name: 'curtain', weight: 1.4, cooldown: 8, phase: 3, fn: function* () { yield* BR.ApexKit.curtain.call(this, 5, 175); } },
+        { name: 'judgement', weight: 2, cooldown: 7, phase: 4, fn: this.atkJudgement },
+        { name: 'breath', weight: 2.2, cooldown: 8, phase: 4, fn: this.atkBreath },
+        { name: 'finale', weight: 1.6, cooldown: 9, phase: 4, fn: this.atkFinale },
       ];
     }
 
     get color() { return PHASE_COLORS[this.phase - 1] || PHASE_COLORS[0]; }
 
     onPhaseChange(phase) {
-      this.speed = phase === 2 ? 85 : 100;
+      this.speed = [70, 85, 105, 135][phase - 1] || 135;
+      this.rgb = this.color;
+      if (phase === 4) this.statusText = 'LAST BREATH';
     }
 
     *phaseTransition(phase) {
@@ -248,6 +255,22 @@
         yield 0.06;
       }
       yield 0.4;
+    }
+
+    /* ---- Phase 4: LAST BREATH ---- */
+    *atkJudgement() {
+      yield* BR.ApexKit.beams.call(this, 11, 0.34, this.color);
+      yield* BR.ApexKit.rain.call(this, 8, 72);
+    }
+
+    *atkBreath() {
+      yield* this.atkGrid();
+      yield* this.atkCross();
+    }
+
+    *atkFinale() {
+      yield* this.atkSpiral();
+      yield* BR.ApexKit.curtain.call(this, 5, 175);
     }
 
     /* ---- drawing ---- */

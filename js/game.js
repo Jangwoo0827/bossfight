@@ -919,8 +919,12 @@
       const lw = 420 * Geo.easeOut(Geo.clamp(t / 0.8, 0, 1));
       ctx.fillRect(C.WIDTH / 2 - lw / 2, cy + 26, lw, 2);
       Draw.text(ctx, boss.def.title, C.WIDTH / 2 - slide, cy + 52, { size: 20, font: 'Georgia', color: '#d8cfe8', spacing: 4, weight: '400' });
-      const stars = '★'.repeat(boss.def.difficulty) + '☆'.repeat(5 - boss.def.difficulty);
-      Draw.text(ctx, stars, C.WIDTH / 2, cy + 88, { size: 18, color: '#ffcf4a', spacing: 4 });
+      const dif = boss.def.difficulty;
+      for (let i = 0; i < 5; i++) {
+        const sx = C.WIDTH / 2 + (i - 2) * 26;
+        Draw.text(ctx, i < Math.min(dif, 5) ? '★' : '☆', sx, cy + 88, { size: 18, color: '#ffcf4a' });
+        if (dif > 5 && i < dif - 5) Draw.text(ctx, '★', sx, cy + 88, { size: 12, color: '#c070ff' });
+      }
       if (boss.elite) Draw.text(ctx, 'ELITE · 체력 +30% · 더 빠름 · SOUL ×1.5', C.WIDTH / 2, cy - 92, { size: 13, color: '#ffd76a', weight: '800' });
       if (boss.def.quote) {
         ctx.globalAlpha = a * Geo.clamp((t - 0.5) / 0.4, 0, 1);
