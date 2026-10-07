@@ -13,6 +13,50 @@
   const { Geo, Draw } = BR;
   const C = BR.CONFIG;
 
+  // Generic patterns every real boss can mix in (all telegraphed), so no fight is a pure memory check
+  const BONUS_ATTACKS = [
+    { name: 'bonusFan', weight: (b) => (b.phase >= 2 ? 1.5 : 0.8), cooldown: 5, fn: function* () {
+      const n = this.phase >= 2 ? 3 : 2;
+      this.chargeUp(this.T(0.7), '#ff9a6a');
+      yield this.T(0.7);
+      for (let i = 0; i < n; i++) {
+        const a = this.angleToPlayer(), cnt = 7;
+        for (let k = 0; k < cnt; k++) {
+          const off = (k - (cnt - 1) / 2) * 0.17;
+          this.shoot(a + off, 270, { kind: 'bullet', radius: 7, damage: 10, life: 3.2, color: '255,150,100' });
+        }
+        this.game.audio.play('shoot');
+        yield this.T(0.5);
+      }
+      yield 0.2;
+    } },
+    { name: 'bonusRain', weight: (b) => (b.phase >= 2 ? 1.5 : 0.8), cooldown: 6, fn: function* () {
+      const n = this.phase >= 2 ? 7 : 5, p = this.player;
+      this.chargeUp(this.T(0.5), '#ff9a6a');
+      yield this.T(0.5);
+      for (let i = 0; i < n; i++) {
+        const t = Geo.clampToArena(p.x + p.vx * 0.5 + Geo.rand(-50, 50), p.y + p.vy * 0.5 + Geo.rand(-50, 50), 50);
+        this.hazard({ shape: 'circle', x: t.x, y: t.y, radius: 62, warn: this.T(0.95), damage: 14, color: '255,140,90' });
+        yield this.T(0.3);
+      }
+      yield this.T(0.6);
+    } },
+    { name: 'bonusLanes', phase: 2, weight: 1.3, cooldown: 8, fn: function* () {
+      const A = C.ARENA, p = this.player;
+      this.chargeUp(this.T(0.6), '#ff7a5a');
+      yield this.T(0.6);
+      const lane = (horizontal, pos, warn) => this.hazard(horizontal
+        ? { shape: 'line', x: A.left, y: pos, angle: 0, length: A.right - A.left, width: 58, warn, damage: 15, hitWindow: 0.2, color: '255,120,90' }
+        : { shape: 'line', x: pos, y: A.top, angle: Math.PI / 2, length: A.bottom - A.top, width: 58, warn, damage: 15, hitWindow: 0.2, color: '255,120,90' });
+      lane(true, p.y, this.T(1.2));
+      lane(false, Geo.rand(A.left + 80, A.right - 80), this.T(1.2));
+      yield this.T(0.55);
+      lane(false, p.x, this.T(1.2));
+      lane(true, Geo.rand(A.top + 60, A.bottom - 60), this.T(1.2));
+      yield this.T(1.5);
+    } },
+  ];
+
   class Boss {
     constructor(game, def, options = {}) {
       this.game = game;
@@ -72,7 +116,7 @@
     distToPlayer() { return Geo.dist(this.x, this.y, this.player.x, this.player.y); }
     isHittable() { return this.active && !this.dead && !this.invulnerable && !this.airborne && this.alpha > 0.35; }
     T(seconds) { return seconds * this.tempo; }
-    recoveryTime() { return this.recoveryByPhase[this.phase - 1] ?? 0.4; }
+    recoveryTime() { return (this.recoveryByPhase[this.phase - 1] ?? 0.4) * 0.8; }
 
     /* ---------------- main update ---------------- */
     update(dt) {
@@ -148,7 +192,8 @@
       const d = this.distToPlayer();
       const candidates = [];
       let total = 0;
-      for (const atk of this.attacks) {
+      const pool = this.id === 'trainingDummy' ? this.attacks : this.attacks.concat(BONUS_ATTACKS);
+      for (const atk of pool) {
         if ((atk.phase || 1) > this.phase) continue;
         if (atk.maxPhase && this.phase > atk.maxPhase) continue;
         if ((this.cooldowns[atk.name] || 0) > this.time) continue;

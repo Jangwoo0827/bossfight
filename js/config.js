@@ -94,7 +94,7 @@ BR.CONFIG = {
     rushHealRatio: 0.5,
     elite: { hp: 1.3, dmg: 1.1, tempo: 0.9, soul: 1.5 },
     healBetweenBossesRatio: 0.35,
-    stageHpScale: 0.06,
+    stageHpScale: 0.08,
     introTime: 2.3,
     victoryDelay: 2.6,
     deathDelay: 1.9,

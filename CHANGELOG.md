@@ -2,6 +2,16 @@
 
 The in-game version of this list is under **PATCH NOTES** on the main menu (`js/data/patchNotes.js`).
 
+## v1.10.0 — Harder Hunts
+
+### NEW
+- 모든 보스 공통 신규 패턴 3종 — 조준 부채꼴 연사 · 위치 예측 폭격 · 십자 레이저(2페이즈부터)
+
+### CHANGED
+- 보스 체력 약 +35% (최종 보스 2200 → 2950)
+- 보스 공격 사이 휴식 시간 20% 감소
+- 진행할수록 보스가 단단해지는 폭 증가
+
 ## v1.9.0 — Constellations
 
 ### NEW
