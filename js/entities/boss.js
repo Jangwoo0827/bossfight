@@ -14,6 +14,7 @@
   const C = BR.CONFIG;
 
   // Generic patterns every real boss can mix in (all telegraphed), so no fight is a pure memory check
+  const SPEED_MULT = 1.2;   // global boss movement / dash speed
   const BONUS_ATTACKS = [
     { name: 'bonusFan', weight: (b) => (b.phase >= 2 ? 1.5 : 0.8), cooldown: 5, fn: function* () {
       const n = this.phase >= 2 ? 3 : 2;
@@ -145,6 +146,7 @@
         this.idleTimer -= dt;
         this.state = this.idleTimer > 0 && this.lastAttack ? 'RECOVERY' : 'IDLE';
         this.idleMove(dt);
+        this.vx *= SPEED_MULT; this.vy *= SPEED_MULT;
         if (this.idleTimer <= 0) this.chooseAttack();
       }
       this.integrate(dt);
@@ -192,7 +194,7 @@
       const d = this.distToPlayer();
       const candidates = [];
       let total = 0;
-      const pool = this.id === 'trainingDummy' ? this.attacks : this.attacks.concat(BONUS_ATTACKS);
+      const pool = this.id === 'trainingDummy' ? this.attacks : this.attacks.concat(BONUS_ATTACKS, BR.BOSS_EXTRAS && BR.BOSS_EXTRAS[this.id] ? [BR.BOSS_EXTRAS[this.id]] : []);
       for (const atk of pool) {
         if ((atk.phase || 1) > this.phase) continue;
         if (atk.maxPhase && this.phase > atk.maxPhase) continue;
@@ -301,6 +303,7 @@
 
     // Move in a straight line; returns true if a wall stopped the dash
     *dash(angle, speed, maxDist) {
+      speed *= SPEED_MULT;
       this.vx = Math.cos(angle) * speed;
       this.vy = Math.sin(angle) * speed;
       let travelled = 0;

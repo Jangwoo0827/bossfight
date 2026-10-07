@@ -4,6 +4,19 @@
 
   BR.PATCH_NOTES = [
     {
+      version: '1.11.0',
+      title: 'Signature Moves',
+      sections: [
+        ['NEW', [
+          '보스 15종 전용 시그니처 패턴 1개씩 추가 (예: 검기사 부채꼴 베기 · 서리 마녀 얼음 가시 · 시계 감시자 톱니 체커판 · 심연의 군주 촉수 그리드)',
+        ]],
+        ['CHANGED', [
+          '모든 보스 체력 2.3배 (최종 보스 약 6800)',
+          '모든 보스 이동 · 돌진 속도 +20%',
+        ]],
+      ],
+    },
+    {
       version: '1.10.0',
       title: 'Harder Hunts',
       sections: [

@@ -123,7 +123,7 @@
         BR.UIRoot.clear();
         g.startPractice(id, c, 1);
         let t = 0;
-        while (inBattle() && t < 240) { if (!step(60, fightBot)) break; t++; }
+        while (inBattle() && t < 480) { if (!step(60, fightBot)) break; t++; }
         if (g.state !== 'victory' && g.state !== 'result') slow.push(`${id}:${g.state}`);
       }
       return { ok: slow.length === 0, detail: slow.length ? 'not finished: ' + slow.join(', ') : '' };
@@ -318,6 +318,27 @@
       let f = 0;
       while ((b.routine || g.hazards.length) && f < 60 * 12) { if (!b.routine) b.idleTimer = 999; if (!step(1, () => { g.player.hp = g.player.stats.maxHp; }, 20)) break; f++; }
       if (b.routine) bad.push(def.id + ':never ends');
+    }
+    return { ok: bad.length === 0, detail: bad.join(', ') };
+  });
+
+  await test('every signature attack runs to completion (all bosses, both phases)', () => {
+    const bad = [];
+    for (const def of BR.BOSS_DATA) {
+      const sig = BR.BOSS_EXTRAS[def.id];
+      if (!sig) { bad.push(def.id + ':missing'); continue; }
+      for (const phase of [1, 2]) {
+        BR.UIRoot.clear();
+        g.startPractice(def.id, 'blade', phase);
+        step(150, null);
+        const b = g.boss;
+        for (const atk of [sig]) {
+          b.idleTimer = 999; b.startAttack(atk);
+          let f = 0;
+          while ((b.routine || g.hazards.length) && f < 60 * 14) { if (!b.routine) b.idleTimer = 999; if (!step(1, () => { g.player.hp = g.player.stats.maxHp; }, 20)) break; f++; }
+          if (b.routine) bad.push(def.id + ':' + atk.name + ' never ends');
+        }
+      }
     }
     return { ok: bad.length === 0, detail: bad.join(', ') };
   });
