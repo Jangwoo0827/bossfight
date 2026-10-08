@@ -132,7 +132,7 @@
       const g = this.game;
       const run = g.run;
       const x = C.WIDTH - 52;
-      Draw.text(ctx, run.mode === 'run' ? `BOSS ${Math.min(run.bossNumber, run.totalBosses)} / ${run.totalBosses}` : run.mode.toUpperCase(), x, 30, { size: 18, align: 'right', color: '#fff', weight: '800', spacing: 3, font: 'Georgia' });
+      Draw.text(ctx, run.mode === 'run' ? `FIGHT ${Math.min(run.bossNumber, run.totalBosses)} / ${run.totalBosses}` : run.mode.toUpperCase(), x, 30, { size: 18, align: 'right', color: '#fff', weight: '800', spacing: 3, font: 'Georgia' });
       // Progress pips
       for (let i = 0; i < run.totalBosses; i++) {
         const px = x - (run.totalBosses - 1 - i) * 14 - 4;

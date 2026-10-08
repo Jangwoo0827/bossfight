@@ -99,7 +99,7 @@
       const rows = list.length ? list.map((e, i) => `
         <div class="lb-row ${i === 0 ? 'top' : ''}">
           <span class="lb-rank">#${i + 1}</span>
-          <span class="lb-res ${e.cleared ? 'clear' : ''}">${e.cleared ? 'CLEAR' : `BOSS ${e.stage}/${total}`}</span>
+          <span class="lb-res ${e.cleared ? 'clear' : ''}">${e.cleared ? 'CLEAR' : `FIGHT ${e.stage}/${total}`}</span>
           <span class="lb-time">${fmtTime(e.time)}</span>
           <span class="lb-char">${esc((BR.CHARACTER_BY_ID[e.character] || {}).name || e.character)}</span>
           <span class="lb-mods">${(e.mods || []).map((m) => (BR.MODIFIER_BY_ID[m] || {}).icon || '').join(' ')}</span>

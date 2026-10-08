@@ -30,7 +30,7 @@
       }).join('');
       const panel = BR.UIRoot.show('dim', `
         <div class="heading">NEXT BOSS</div>
-        <div class="subheading">BOSS ${run.bossNumber} / ${run.totalBosses} · 나중에 고를수록 보스가 조금 더 강해진다</div>
+        <div class="subheading">FIGHT ${run.bossNumber} / ${run.totalBosses} · 나중에 고를수록 보스가 조금 더 강해진다</div>
         <div class="card-row">${cards}</div>
       `);
       panel.querySelectorAll('.card').forEach((el) => {

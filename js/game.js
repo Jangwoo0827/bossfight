@@ -913,7 +913,7 @@
       ctx.globalAlpha = a;
       const slide = (1 - Geo.easeOut(Geo.clamp(t / 0.6, 0, 1))) * 60;
       const cy = C.HEIGHT / 2;
-      Draw.text(ctx, this.run.mode === 'run' ? `BOSS ${this.run.bossNumber} / ${this.run.totalBosses}` : this.run.mode.toUpperCase(), C.WIDTH / 2, cy - 66, { size: 16, color: '#ff7088', spacing: 8, weight: '700' });
+      Draw.text(ctx, this.run.mode === 'run' ? `FIGHT ${this.run.bossNumber} / ${this.run.totalBosses}` : this.run.mode.toUpperCase(), C.WIDTH / 2, cy - 66, { size: 16, color: '#ff7088', spacing: 8, weight: '700' });
       Draw.text(ctx, boss.name, C.WIDTH / 2 + slide, cy - 14, { size: 64, font: 'Georgia', weight: '700', color: '#fff', spacing: 10, stroke: 'rgba(0,0,0,0.8)', strokeWidth: 8 });
       ctx.fillStyle = boss.def.color;
       const lw = 420 * Geo.easeOut(Geo.clamp(t / 0.8, 0, 1));

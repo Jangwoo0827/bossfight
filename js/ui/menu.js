@@ -98,7 +98,7 @@
       const total = diff ? diff.bosses : 5;
       const where = c.phase === 'fight' && BR.BOSS_BY_ID[c.bossId] ? BR.BOSS_BY_ID[c.bossId].name : c.phase === 'select' ? 'NEXT BOSS' : 'REWARD';
       return `<button class="btn primary continue-btn" data-action="continue">Continue
-        <small>${c.daily ? 'DAILY · ' : ''}BOSS ${Math.min((c.stage || 0) + 1, total)}/${total} · ${escapeHtml(where)} · ${diff ? diff.name : ''}${ch ? ' · ' + escapeHtml(ch.name) : ''}</small></button>`;
+        <small>${c.daily ? 'DAILY · ' : ''}FIGHT ${Math.min((c.stage || 0) + 1, total)}/${total} · ${escapeHtml(where)} · ${diff ? diff.name : ''}${ch ? ' · ' + escapeHtml(ch.name) : ''}</small></button>`;
     }
 
     // Daily challenge: same seed + modifier for everyone today
