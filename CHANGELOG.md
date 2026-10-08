@@ -7,6 +7,7 @@ The in-game version of this list is under **PATCH NOTES** on the main menu (`js/
 ### NEW
 - APEX 보스 5종 추가 (총 20종) — 노란별 5개 위에 보라별이 겹치는 ★6~9 난이도: MAGMA TITAN · PRISM SERAPH · NIGHT EMPRESS · TIDE LEVIATHAN · RUIN KING
 - APEX 보스는 체력과 공격력이 더 높고 템포가 빠르다. 3번째 전투부터, EASY 제외 등장 (BOSS RUSH에는 모두 포함)
+- APEX 보스 5종은 각자 완전히 다른 모습 — 바위 거인 · 수정 천사 · 꽃 여제 · 바다뱀 · 후드 쓴 왕
 - 새 공통 패턴 — 회전 빔 · 빈틈이 움직이는 벽(커튼) · 소용돌이 · 순간이동 처형
 
 ### CHANGED
