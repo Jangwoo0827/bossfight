@@ -181,6 +181,25 @@
       }));
     }
 
+    showSecret(cleared, soul) {
+      const g = this.game;
+      const panel = BR.UIRoot.show('dim', `
+        <div class="result-title ${cleared ? 'clear' : 'fail'}" style="font-size:56px">${cleared ? 'DUMMY DESTROYED' : 'THE DUMMY WINS'}</div>
+        <div class="subheading">${cleared ? (soul ? `비밀을 파헤친 보상 · <b style="color:#ffd76a">+${soul} SOUL</b>` : '이미 한 번 쓰러뜨린 상대 — 보상은 처음 한 번뿐') : '더미는 아직 멀쩡하다…'}</div>
+        <div class="hint-line">${cleared ? '이 일은 비밀로 하자.' : '다시 도전하려면 튜토리얼에서 더미를 또 부수면 된다.'}</div>
+        <div class="btn-row">
+          <button class="btn primary" data-action="retry">Retry</button>
+          <button class="btn" data-action="menu">Main Menu</button>
+        </div>
+      `);
+      panel.querySelectorAll('[data-action]').forEach((el) => el.addEventListener('click', () => {
+        g.audio.play('button');
+        this.hide();
+        if (el.dataset.action === 'retry') g._startSpecial('secret', 'secretDummy', g.secretChar || g.saveData.settings.lastCharacter);
+        else g.goToMenu();
+      }));
+    }
+
     showTutorialDone() {
       const g = this.game;
       const panel = BR.UIRoot.show('dim', `

@@ -76,6 +76,7 @@
       this.vy = 0;
       this.baseSpeed = 100;
       this.speed = 100;
+      this.speedMult = SPEED_MULT;
       this.facing = Math.PI / 2;
 
       this.phase = 1;
@@ -146,7 +147,7 @@
         this.idleTimer -= dt;
         this.state = this.idleTimer > 0 && this.lastAttack ? 'RECOVERY' : 'IDLE';
         this.idleMove(dt);
-        this.vx *= SPEED_MULT; this.vy *= SPEED_MULT;
+        this.vx *= this.speedMult; this.vy *= this.speedMult;
         if (this.idleTimer <= 0) this.chooseAttack();
       }
       this.integrate(dt);
@@ -303,7 +304,7 @@
 
     // Move in a straight line; returns true if a wall stopped the dash
     *dash(angle, speed, maxDist) {
-      speed *= SPEED_MULT;
+      speed *= this.speedMult;
       this.vx = Math.cos(angle) * speed;
       this.vy = Math.sin(angle) * speed;
       let travelled = 0;

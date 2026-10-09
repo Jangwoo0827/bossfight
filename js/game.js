@@ -186,7 +186,8 @@
           break;
         case 'victory':
           if (this.stateTimer >= R.victoryDelay) {
-            if (this.run.mode === 'practice') this.showPracticeResult(true);
+            if (this.run.mode === 'secret') this.showSecretResult(true);
+            else if (this.run.mode === 'practice') this.showPracticeResult(true);
             else if (this.run.isComplete) this.showResult(true);
             else if (this.run.rush) this._rushNext();
             else this.showReward();
@@ -194,7 +195,8 @@
           break;
         case 'dying':
           if (this.stateTimer >= R.deathDelay) {
-            if (this.run.mode === 'practice') this.showPracticeResult(false);
+            if (this.run.mode === 'secret') this.showSecretResult(false);
+            else if (this.run.mode === 'practice') this.showPracticeResult(false);
             else this.showResult(false);
           }
           break;
@@ -478,9 +480,42 @@
       if (step && step.event === type) t.count++;
     }
 
+    // Easter egg: the dummy finally breaks and something else takes its place
+    triggerSecret(dummy) {
+      this.secretPending = 1.9;
+      dummy.invulnerable = true;
+      dummy.tremble = 1.9;
+      this.flash = 1;
+      this.flashColor = '255,40,40';
+      this.camera.shakePreset('big');
+      this.audio.play('bossDeath');
+      this.showBanner('……?', '더미가 멈췄다', '#ff3030', 1.9);
+    }
+
+    startSecret() {
+      const id = this.player ? this.player.character.id : this.saveData.settings.lastCharacter;
+      this.tutorial = null;
+      this.secretPending = 0;
+      this.secretChar = id;
+      this._startSpecial('secret', 'secretDummy', id);
+    }
+
+    showSecretResult(cleared) {
+      this.state = 'result';
+      this.stateTimer = 0;
+      this.input.releaseMouse();
+      this.music.play('menu');
+      this.ui.result.showSecret(cleared, this.lastSecretSoul || 0);
+    }
+
     _updateTutorial(dt) {
       const t = this.tutorial;
       const p = this.player;
+      if (this.secretPending > 0) {
+        this.secretPending -= dt;
+        if (this.secretPending <= 0) this.startSecret();
+        return;
+      }
       p.energy = C.PLAYER.maxEnergy;
       p.lanceCharges = p.stats.skillCharges;
       if (t.done) {
@@ -601,6 +636,18 @@
       for (const h of this.hazards) h.dead = true;
       for (const p of this.projectiles) if (p.owner === 'boss') p.dead = true;
       this.audio.play('bossDeath');
+      if (this.run.mode === 'secret') {
+        const first = !this.saveData.secretDone;
+        this.lastSecretSoul = first ? 25000 : 0;
+        if (first) {
+          this.saveData.secretDone = true;
+          this.saveData.soul += 25000;
+          this.saveData.stats.totalSoul += 25000;
+          BR.SaveSystem.save(this.saveData);
+        }
+        this.showBanner('DUMMY DESTROYED', first ? '+25000 SOUL' : '', '#ffd76a', R.victoryDelay);
+        return;
+      }
       if (this.run.mode !== 'run') {
         this.showBanner('PRACTICE CLEAR', `${(this.run.time).toFixed(1)}s`, '#7dffa0', R.victoryDelay);
         return;

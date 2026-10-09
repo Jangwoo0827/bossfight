@@ -390,6 +390,44 @@
     return { ok: bad.length === 0, detail: bad.join(', ') };
   });
 
+  await test('easter egg: destroying the tutorial dummy summons the 50000 HP boss; +25000 SOUL once', () => {
+    const bad = [];
+    const keepSoul = g.saveData.soul, keepDone = g.saveData.secretDone;
+    g.saveData.secretDone = false;
+    const soul0 = g.saveData.soul;
+    BR.UIRoot.clear();
+    g.startTutorial('blade');
+    step(60 * 6, null);
+    const d = g.boss;
+    d.takeDamage(d.maxHp * 0.9);
+    step(60 * 4, null);
+    if (g.run.mode !== 'secret' || !g.boss || g.boss.id !== 'secretDummy') {
+      bad.push('not summoned: ' + g.run.mode);
+    } else {
+      const b = g.boss;
+      if (b.maxHp !== 50000) bad.push('hp ' + b.maxHp);
+      if (b.speedMult !== 2.5) bad.push('speed');
+      step(200, null);
+      for (const atk of b.attacks) {
+        b.idleTimer = 999; b.startAttack(atk);
+        let f = 0;
+        while ((b.routine || g.hazards.length) && f < 60 * 14) { if (!b.routine) b.idleTimer = 999; if (!step(1, () => { g.player.hp = g.player.stats.maxHp; }, 20)) break; f++; }
+        if (b.routine) bad.push(atk.name + ' never ends');
+      }
+      killBoss();
+      step(60 * 6, null);
+      if (g.saveData.soul !== soul0 + 25000 || !g.saveData.secretDone) bad.push('reward ' + (g.saveData.soul - soul0));
+      // second time: no extra reward
+      BR.UIRoot.clear();
+      g.startTutorial('blade'); step(60 * 6, null);
+      g.boss.takeDamage(g.boss.maxHp * 0.9); step(60 * 4, null);
+      killBoss(); step(60 * 6, null);
+      if (g.saveData.soul !== soul0 + 25000) bad.push('rewarded twice');
+    }
+    g.saveData.soul = keepSoul; g.saveData.secretDone = keepDone;
+    return { ok: bad.length === 0, detail: bad.join(', ') };
+  });
+
   await test('key rebinding: new key works, old key stops, arrows still move', () => {
     const inp = g.input;
     const fire = (type, code) => window.dispatchEvent(new KeyboardEvent(type, { code }));

@@ -17,6 +17,7 @@
         bossKills: {}, bossDeaths: {}, clearsByDifficulty: {}, clearsByCharacter: {}, bestClearTime: {}, special: {}, daily: {}, rushBest: {}, rushBestStage: 0, leaderboard: {},
       },
       achievements: {},
+      secretDone: false,
     };
   }
 

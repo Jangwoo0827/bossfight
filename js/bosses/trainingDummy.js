@@ -25,7 +25,14 @@
     takeDamage(amount) {
       super.takeDamage(amount);
       this.wobble = 1;
-      if (this.hp < this.maxHp * 0.15) this.hp = this.maxHp; // never dies
+      if (this.hp < this.maxHp * 0.15) {
+        this.hp = this.maxHp; // never dies...
+        // ...unless you really mean it
+        if (!this.secretFired && this.game.run && this.game.run.mode === 'tutorial') {
+          this.secretFired = true;
+          this.game.triggerSecret(this);
+        }
+      }
       this.game.onTutorialEvent('hit');
     }
 
