@@ -230,8 +230,9 @@
       const daily = opts.daily ? BR.dailyInfo() : null;
       let character = BR.CHARACTER_BY_ID[characterId || settings.lastCharacter] || BR.CHARACTERS[0];
       if (!BR.isCharacterUnlocked(character, this.saveData)) character = BR.CHARACTERS[0];
-      const difficulty = daily ? BR.DIFFICULTY_BY_ID.normal
+      let difficulty = daily ? BR.DIFFICULTY_BY_ID.normal
         : BR.DIFFICULTY_BY_ID[difficultyId || settings.lastDifficulty] || BR.DIFFICULTY_BY_ID.normal;
+      if (!BR.isDifficultyUnlocked(difficulty, this.saveData)) difficulty = BR.DIFFICULTY_BY_ID.normal;
       const mods = daily ? [daily.modifier.id] : (modifierIds || settings.lastModifiers || []);
       settings.lastCharacter = character.id;
       if (!daily) {

@@ -9,6 +9,9 @@
   const count = (obj) => Object.keys(obj || {}).filter((k) => obj[k] > 0).length;
   const special = (s, key) => (s.special && s.special[key]) || 0;
 
+  // Everything unlocked? (gates CATACLYSM and the ASCENDANT)
+  BR.allAchievementsDone = (save) => !!save && BR.ACHIEVEMENTS.every((a) => save.achievements && save.achievements[a.id]);
+
   BR.ACHIEVEMENTS = [
     { id: 'first_blood', icon: '⚔', name: 'First Blood', desc: '보스 1마리 처치', progress: (s) => [sum(s.bossKills), 1] },
     { id: 'slayer', icon: '☠', name: 'Slayer', desc: '보스 25마리 처치', progress: (s) => [sum(s.bossKills), 25] },

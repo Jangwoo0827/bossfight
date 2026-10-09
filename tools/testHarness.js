@@ -347,6 +347,10 @@
 
   await test('every character: attack, charge skill and E skill all run (incl. unlockable ones)', () => {
     const bad = [];
+    const keepClears = g.saveData.stats.clears, keepAch = g.saveData.achievements;
+    g.saveData.stats.clears = 99;
+    g.saveData.achievements = {};
+    for (const a of BR.ACHIEVEMENTS) g.saveData.achievements[a.id] = true;
     for (const ch of BR.CHARACTERS) {
       BR.UIRoot.clear();
       g.startPractice('swordKnight', ch.id, 1);
@@ -355,8 +359,18 @@
       g.combat.playerChargeSkill(pl, pl.aim, 1);
       g.combat.playerESkill(pl, ch.e);
       if (!step(90, fightBot)) bad.push(ch.id + ':skills');
+      if (g.player.character.id !== ch.id) bad.push(ch.id + ':not selectable');
       if (g.boss && g.boss.hp >= g.boss.maxHp) bad.push(ch.id + ':dealt no damage');
     }
+    // CATACLYSM + ASCENDANT are gated behind every achievement
+    BR.UIRoot.clear();
+    g.startRun('ascendant', 'cataclysm', []);
+    if (g.run.difficulty.id !== 'cataclysm' || g.player.character.id !== 'ascendant' || g.player.stats.critChance < 0.2) bad.push('cataclysm/ascendant unlocked run');
+    g.saveData.achievements = {};
+    BR.UIRoot.clear();
+    g.startRun('ascendant', 'cataclysm', []);
+    if (g.run.difficulty.id === 'cataclysm' || g.player.character.id === 'ascendant') bad.push('locked content was usable');
+    g.saveData.stats.clears = keepClears; g.saveData.achievements = keepAch;
     return { ok: bad.length === 0, detail: bad.join(', ') };
   });
 

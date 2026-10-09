@@ -250,7 +250,7 @@
       const s = g.saveData.settings;
       const esc = escapeHtml;
       let charId = BR.CHARACTER_BY_ID[s.lastCharacter] && BR.isCharacterUnlocked(BR.CHARACTER_BY_ID[s.lastCharacter], g.saveData) ? s.lastCharacter : BR.CHARACTERS[0].id;
-      let diffId = BR.DIFFICULTY_BY_ID[s.lastDifficulty] ? s.lastDifficulty : 'normal';
+      let diffId = BR.DIFFICULTY_BY_ID[s.lastDifficulty] && BR.isDifficultyUnlocked(BR.DIFFICULTY_BY_ID[s.lastDifficulty], g.saveData) ? s.lastDifficulty : 'normal';
 
       const charCards = BR.CHARACTERS.map((c) => {
         const clears = g.saveData.stats.clearsByCharacter[c.id] || 0;
@@ -279,6 +279,11 @@
       }).join('');
       const diffButtons = BR.DIFFICULTIES.map((d) => {
         const clears = g.saveData.stats.clearsByDifficulty[d.id] || 0;
+        if (!BR.isDifficultyUnlocked(d, g.saveData)) {
+          return `<button class="diff-btn locked" style="--accent:${d.color}" disabled>
+          <span class="dname">🔒 ${d.name}</span><span class="ddesc">모든 업적을 달성하면 해금</span>
+          <span class="dmeta">SOUL ×${d.soul}</span></button>`;
+        }
         return `<button class="diff-btn" style="--accent:${d.color}" data-diff="${d.id}">
           <span class="dname">${d.name}</span><span class="ddesc">${esc(d.desc)}</span>
           <span class="dmeta">SOUL ×${d.soul}${clears ? ` · CLEAR ${clears}` : ''}</span></button>`;

@@ -443,3 +443,15 @@ body { touch-action: none; }
 .char-card .skill-list { font-size: 11px; line-height: 1.4; }
 .char-card .char-stats { font-size: 11px; gap: 6px; }
 .char-card .name { font-size: 17px; }
+
+.diff-btn.locked { opacity: 0.45; filter: grayscale(0.8); cursor: not-allowed; }
+.diff-row { flex-wrap: wrap; }
+
+/* 7 character cards in one row */
+.char-card { width: 164px; padding: 12px 9px; }
+.card-row { gap: 8px; }
+.char-card .desc { font-size: 11px; }
+.char-card .skill-list { font-size: 10px; padding-left: 14px; }
+.char-card .char-stats { font-size: 10px; flex-wrap: wrap; }
+.char-card .name { font-size: 15px; letter-spacing: 1px; }
+.char-card .tag { font-size: 10px; }

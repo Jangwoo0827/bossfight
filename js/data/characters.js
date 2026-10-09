@@ -147,9 +147,35 @@
         '{skill}: Overheat — 5초간 공격 속도 · 사거리 증가, 직전 회피 시 PARRY',
       ],
     },
+    {
+      id: 'ascendant',
+      name: 'ASCENDANT',
+      role: '초월자 · 만능',
+      color: '#fff0a0',
+      rgb: '255,240,160',
+      hpBonus: 60,
+      speedMult: 1.12,
+      damage: 20,
+      attack: 'slash',
+      attackCooldown: 0.26,
+      comboLength: 3,
+      charge: 'judgment',
+      e: 'ascend',
+      qName: 'JUDGMENT',
+      eName: 'ASCEND',
+      bonus: { critChance: 0.15, damageMult: 0.25, energyRegenMult: 0.3 },
+      unlock: { all: true, text: '모든 업적 달성 시 해금' },
+      desc: '체력 · 속도 · 공격력 · 치명타 · 에너지까지 모두 뛰어난 최강의 사냥꾼.',
+      skills: [
+        '좌클릭: 빠른 베기 + 검기 · 3타 피니셔',
+        '{charge} (꾹 눌러 충전): Judgment — 거대한 관통 심판',
+        '{skill}: Ascend — 1.2초 무적 + 폭발 + 3초간 공격 속도 증가, 직전 회피 시 PARRY',
+      ],
+    },
   ];
 
-  BR.isCharacterUnlocked = (c, save) => !c.unlock || ((save && save.stats && save.stats[c.unlock.stat]) || 0) >= c.unlock.count;
+  BR.isCharacterUnlocked = (c, save) => !c.unlock || (c.unlock.all ? BR.allAchievementsDone(save) : ((save && save.stats && save.stats[c.unlock.stat]) || 0) >= c.unlock.count);
+  BR.isDifficultyUnlocked = (d, save) => !d.unlock || BR.allAchievementsDone(save);
 
   BR.CHARACTER_BY_ID = {};
   for (const c of BR.CHARACTERS) BR.CHARACTER_BY_ID[c.id] = c;
@@ -159,6 +185,8 @@
     { id: 'normal', name: 'NORMAL', bosses: 5, hp: 1, dmg: 1, soul: 1, color: '#8fb7ff', desc: '보스 5연전 · 기본 밸런스' },
     { id: 'hard', name: 'HARD', bosses: 7, hp: 1.2, dmg: 1.2, soul: 1.7, color: '#ff9a4a', desc: '보스 7연전 · 체력 +20% · 피해 +20%' },
     { id: 'nightmare', name: 'NIGHTMARE', bosses: 10, hp: 1.4, dmg: 1.4, soul: 2.8, color: '#ff3d5a', desc: '보스 10연전 · 체력 +40% · 피해 +40%' },
+    { id: 'cataclysm', name: 'CATACLYSM', bosses: 12, hp: 1.9, dmg: 1.9, soul: 5, eliteBonus: 0.2, color: '#ff2bd6', unlock: 'achievements',
+      desc: '보스 12연전 · 체력 +90% · 피해 +90% · 엘리트 +20%p' },
   ];
 
   BR.DIFFICULTY_BY_ID = {};

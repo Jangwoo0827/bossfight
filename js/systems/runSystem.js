@@ -21,7 +21,7 @@
       this.modifiers = [];
       this.bossHpMod = 1;
       this.noHeal = false;
-      this.eliteChance = R.eliteChance;
+      this.eliteChance = R.eliteChance + (this.difficulty.eliteBonus || 0);
       this.enemyTimeScale = 1;     // relic: Cracked Hourglass
       this.relics = [];
       this.synergies = [];

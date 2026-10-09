@@ -378,6 +378,7 @@
       if (type === 'bulwark') return this._bulwark(player);
       if (type === 'blink') return this._blink(player);
       if (type === 'vault') return this._vault(player);
+      if (type === 'ascend') return this._ascend(player);
       if (type === 'overheat') return this._overheat(player);
       return this._nova(player);
     }
@@ -511,6 +512,28 @@
       g.particles.emit('dust', player.x, player.y, 14, { radius: 12 });
       g.camera.shakePreset('small');
       g.audio.play('dash');
+    }
+
+    _ascend(player) {
+      const g = this.game;
+      const s = player.stats;
+      const A = SK.ascend;
+      const sc = s.eSkillScale || 1;
+      this._tryParry(player);
+      player.iframes = Math.max(player.iframes, A.iframes);
+      player.overheatTimer = Math.max(player.overheatTimer, A.haste);
+      this._clearAround(player.x, player.y, A.radius * 1.2 * sc);
+      const boss = g.boss, dmg = s.damage * A.damageMult * s.skillDamageMult, r = A.radius * sc;
+      if (boss && boss.isHittable() && Geo.dist(player.x, player.y, boss.x, boss.y) <= r + boss.radius) {
+        const a = Geo.angle(player.x, player.y, boss.x, boss.y);
+        this.damageBoss(dmg, boss.x - Math.cos(a) * boss.radius, boss.y - Math.sin(a) * boss.radius, { angle: a, skill: true, sx: player.x, sy: player.y });
+      }
+      if (boss) for (const t of boss.extraTargets) if (!t.dead && Geo.dist(player.x, player.y, t.x, t.y) <= r + t.radius) this.damageTarget(t, dmg, t.x, t.y);
+      g.effects.push(new BR.RingFx({ x: player.x, y: player.y, r0: 10, r1: r, color: '255,240,160', width: 18, life: 0.4 }));
+      g.effects.push(new BR.RingFx({ x: player.x, y: player.y, r0: 20, r1: r * 1.3, color: '255,255,255', width: 5, life: 0.5 }));
+      g.particles.emitRing('spark', player.x, player.y, 18, 22, { speedMult: 1.6, color: '255,240,160' });
+      g.camera.shakePreset('medium');
+      g.audio.play('nova');
     }
 
     _overheat(player) {

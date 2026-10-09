@@ -4,6 +4,16 @@
 
   BR.PATCH_NOTES = [
     {
+      version: '1.14.0',
+      title: 'Cataclysm',
+      sections: [
+        ['NEW', [
+          '난이도 CATACLYSM — 보스 12연전 · 체력 +90% · 피해 +90% · 엘리트 +20%p · SOUL ×5 (모든 업적 달성 시 해금)',
+          '캐릭터 ASCENDANT — 체력 · 속도 · 공격력 · 치명타 · 에너지가 모두 높은 최강의 사냥꾼. Q: Judgment(거대 관통 심판) · E: Ascend(무적 + 폭발 + 공격 속도 증가) (모든 업적 달성 시 해금)',
+        ]],
+      ],
+    },
+    {
       version: '1.13.0',
       title: 'Trophies & Two New Hunters',
       sections: [

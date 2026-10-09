@@ -48,6 +48,9 @@ BR.CONFIG = {
     roll: { cooldown: 5, energyCost: 25, distance: 170, duration: 0.2, iframes: 0.45, shots: 7, spread: 0.9, damageMult: 1.4 },
     bulwark: { cooldown: 8, energyCost: 35, duration: 1.0 },
     blink: { cooldown: 4, energyCost: 25, distance: 200, iframes: 0.3 },
+    // Ascendant
+    judgment: { kind: 'lance', speed: 1300, radius: [18, 34], damageMult: [3.0, 7.0], range: 1100 },
+    ascend: { cooldown: 7, energyCost: 30, radius: 240, damageMult: 3, iframes: 1.2, haste: 3 },
     // Lancer
     javelin: { kind: 'lance', speed: 1500, radius: [8, 14], damageMult: [2.6, 6.0], range: 1100 },
     vault: { cooldown: 5, energyCost: 25, distance: 260, duration: 0.2, iframes: 0.5, damageMult: 2.2 },

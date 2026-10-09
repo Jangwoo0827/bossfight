@@ -12,7 +12,7 @@
     createBaseStats(meta, character) {
       const P = BR.CONFIG.PLAYER;
       const ch = character || BR.CHARACTERS[0];
-      return {
+      const stats = {
         maxHp: P.maxHp + ch.hpBonus + metaValue(meta, 'vitality'),
         damage: ch.damage,
         damageMult: 1 + metaValue(meta, 'might'),
@@ -73,7 +73,11 @@
         giantSlayer: 0,
         critEnergy: 0,
       };
+      // character passives
+      for (const k in ch.bonus || {}) stats[k] += ch.bonus[k];
+      return stats;
     },
+
 
     apply(stats, upgrade, player) {
       if (!upgrade || typeof upgrade.apply !== 'function') return;
