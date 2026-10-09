@@ -435,3 +435,11 @@ body { touch-action: none; }
 /* star ratings: yellow base, purple stars layered on top for 6-10 */
 .st { position: relative; display: inline-block; }
 .st .p { position: absolute; left: 0; top: 0; width: 100%; text-align: center; color: #c070ff; font-size: 0.62em; line-height: 1.6; text-shadow: 0 0 4px #7a30d0; }
+
+/* 6 character cards fit in one row */
+.char-card { width: 198px; min-height: 0; padding: 14px 12px; }
+.card-row { gap: 10px; }
+.char-card .desc { font-size: 12px; line-height: 1.45; }
+.char-card .skill-list { font-size: 11px; line-height: 1.4; }
+.char-card .char-stats { font-size: 11px; gap: 6px; }
+.char-card .name { font-size: 17px; }

@@ -48,6 +48,12 @@ BR.CONFIG = {
     roll: { cooldown: 5, energyCost: 25, distance: 170, duration: 0.2, iframes: 0.45, shots: 7, spread: 0.9, damageMult: 1.4 },
     bulwark: { cooldown: 8, energyCost: 35, duration: 1.0 },
     blink: { cooldown: 4, energyCost: 25, distance: 200, iframes: 0.3 },
+    // Lancer
+    javelin: { kind: 'lance', speed: 1500, radius: [8, 14], damageMult: [2.6, 6.0], range: 1100 },
+    vault: { cooldown: 5, energyCost: 25, distance: 260, duration: 0.2, iframes: 0.5, damageMult: 2.2 },
+    // Pyromancer
+    inferno: { kind: 'quake', speed: 420, radius: [34, 60], damageMult: [2.0, 4.6], range: 620 },
+    overheat: { cooldown: 11, energyCost: 40, duration: 5 },
   },
 
   PARRY: {
@@ -66,6 +72,8 @@ BR.CONFIG = {
     finisherMult: 1.8,
     gun: { speed: 950, range: 620, radius: 5, jitter: 0.035, spread: 0.1 },
     hammer: { range: 125, arc: 2.0, shockRange: 180, shockRatio: 0.4, quakeRadius: 170 },
+    spear: { range: 185, arc: 0.5 },
+    flame: { range: 130, arc: 1.0, fireballMult: 4 },
   },
 
   COMBAT: {

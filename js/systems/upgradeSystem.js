@@ -64,6 +64,14 @@
         executioner: 0,
         berserker: 0,
         critHeal: 0,
+        parryReflect: metaValue(meta, 'counterforce'),
+        parryStun: metaValue(meta, 'daze'),
+        parryEnergy: 0,
+        parryClear: false,
+        parryIframes: 0,
+        parryReset: false,
+        giantSlayer: 0,
+        critEnergy: 0,
       };
     },
 

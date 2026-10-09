@@ -5,6 +5,7 @@
   const C = BR.CONFIG;
   const P = C.PLAYER;
   const SK = C.SKILLS;
+  const CHARGE_FACTOR = { gun: 1.7, hammer: 0.5, spear: 0.8, flame: 2.6 };
   const AT = C.ATTACKS;
   const PR = C.PARRY;
 
@@ -117,6 +118,8 @@
         case 'gun': return this._gunAttack(player, angle, finisher);
         case 'hammer': return this._hammerAttack(player, angle, side, finisher);
         case 'orb': return this._orbAttack(player, angle, finisher);
+        case 'spear': return this._spearAttack(player, angle, side, finisher);
+        case 'flame': return this._flameAttack(player, angle, finisher);
         default: return this._slashAttack(player, angle, side, finisher);
       }
     }
@@ -235,6 +238,53 @@
       g.audio.play('explosion');
     }
 
+    _spearAttack(player, angle, side, finisher) {
+      const g = this.game;
+      const s = player.stats;
+      const SP = AT.spear;
+      const range = SP.range * (finisher ? 1.3 : 1) * (s.meleeRangeMult || 1);
+      const arc = finisher ? 0.75 : SP.arc;
+      const hit = this._meleeCone(player, angle, range, arc, s.damage * (finisher ? AT.finisherMult : 1), { finisher });
+      if (finisher) {
+        const skip = hit.targets.slice();
+        if (hit.bossHit && g.boss) skip.push(g.boss);
+        const speed = 900 * s.projectileSpeedMult;
+        this._spawnPlayerProjectiles(player, angle, 2 + s.projectileCount, 0.13, {
+          kind: 'wave', speed, radius: 10, damage: s.damage * 0.55, life: 0.5, pierce: true, isFinisher: true, color: player.character.rgb,
+        }, skip);
+        g.camera.shakePreset('small');
+      }
+      player.vx += Math.cos(angle) * (finisher ? 220 : 120);
+      player.vy += Math.sin(angle) * (finisher ? 220 : 120);
+      g.effects.push(new BR.SlashFx({
+        x: player.x, y: player.y, angle, radius: range * 0.9, arc: arc * 0.9, dir: side, follow: player,
+        color: finisher ? '255,240,200' : '255,210,122', width: finisher ? 14 : 9, life: 0.13,
+      }));
+      g.audio.play(finisher ? 'swing' : 'attack');
+    }
+
+    _flameAttack(player, angle, finisher) {
+      const g = this.game;
+      const s = player.stats;
+      const FL = AT.flame;
+      const heat = player.overheatTimer > 0;
+      const dmg = s.damage * (heat ? 1.25 : 1);
+      if (finisher) {
+        const speed = 620 * s.projectileSpeedMult;
+        this._spawnPlayerProjectiles(player, angle, s.projectileCount, 0.2, {
+          kind: 'bigBullet', speed, radius: 15, damage: dmg * FL.fireballMult, pierce: true, life: 0.9, isFinisher: true, color: player.character.rgb,
+        });
+        g.particles.emit('spark', player.x + Math.cos(angle) * 24, player.y + Math.sin(angle) * 24, 8, { angle, spread: 0.7, color: player.character.rgb });
+        g.camera.shakePreset('small');
+        g.audio.play('swing');
+        return;
+      }
+      const range = FL.range * (heat ? 1.25 : 1) * (s.meleeRangeMult || 1);
+      this._meleeCone(player, angle, range, FL.arc, dmg, { noStop: true });
+      g.particles.emit('spark', player.x + Math.cos(angle) * range * 0.6, player.y + Math.sin(angle) * range * 0.6, 2, { angle, spread: 0.5, color: player.character.rgb });
+      g.audio.play('attack');
+    }
+
     _hammerAttack(player, angle, side, finisher) {
       const g = this.game;
       const s = player.stats;
@@ -304,10 +354,10 @@
       }
       const fullMult = full ? s.fullChargeMult : 1;
       g.projectiles.push(new BR.Projectile({
-        owner: 'player', kind,
+        owner: 'player', kind: def.kind || kind,
         x: player.x + Math.cos(angle) * 20, y: player.y + Math.sin(angle) * 20,
         angle, speed: def.speed, radius: lerp(def.radius),
-        damage: fullMult * s.damage * lerp(def.damageMult) * s.skillDamageMult * (player.character.attack === 'gun' ? 1.7 : player.character.attack === 'hammer' ? 0.5 : 1),
+        damage: fullMult * s.damage * lerp(def.damageMult) * s.skillDamageMult * (CHARGE_FACTOR[player.character.attack] || 1),
         life: def.range / def.speed, pierce: true, clearsProjectiles: true, isSkill: true, color: player.character.rgb,
       }));
       player.recoil = 2;
@@ -327,6 +377,8 @@
       if (type === 'roll') return this._roll(player);
       if (type === 'bulwark') return this._bulwark(player);
       if (type === 'blink') return this._blink(player);
+      if (type === 'vault') return this._vault(player);
+      if (type === 'overheat') return this._overheat(player);
       return this._nova(player);
     }
 
@@ -353,8 +405,10 @@
       const g = this.game;
       const healed = player.heal(PR.heal + player.stats.parryHealBonus);
       if (player.stats.counterBuff) player.counterTimer = 3;
-      player.energy = Math.min(P.maxEnergy, player.energy + PR.energy);
-      player.eTimer *= PR.cooldownRefund;
+      player.energy = Math.min(P.maxEnergy, player.energy + PR.energy + player.stats.parryEnergy);
+      player.eTimer = player.stats.parryReset ? 0 : player.eTimer * PR.cooldownRefund;
+      if (player.stats.parryIframes) player.iframes = Math.max(player.iframes, player.stats.parryIframes);
+      if (player.stats.parryClear) { this._clearAround(player.x, player.y, 320); g.effects.push(new BR.RingFx({ x: player.x, y: player.y, r0: 20, r1: 320, color: '255,255,255', width: 5, life: 0.4 })); }
       g.spawnText(player.x, player.y - 34, 'PARRY!', { color: '#ffffff', size: 22, life: 0.8 });
       if (healed > 0) g.spawnText(player.x + 26, player.y - 14, `+${Math.round(healed)}`, { color: '#7dffa0', size: 15 });
       g.effects.push(new BR.RingFx({ x: player.x, y: player.y, r0: 10, r1: 90, color: '255,255,255', width: 6, life: 0.3 }));
@@ -368,8 +422,8 @@
       // Counter: reflect damage + stun the boss
       const boss = g.boss;
       if (boss && boss.isHittable()) {
-        this.damageBoss(player.stats.damage * PR.reflectMult, boss.x, boss.y - boss.radius * 0.4, { canCrit: false, skill: true, parry: true });
-        if (!boss.dead && boss.stun(PR.stun)) {
+        this.damageBoss(player.stats.damage * (PR.reflectMult + player.stats.parryReflect), boss.x, boss.y - boss.radius * 0.4, { canCrit: false, skill: true, parry: true });
+        if (!boss.dead && boss.stun(PR.stun + player.stats.parryStun)) {
           g.particles.emit('spark', boss.x, boss.y - boss.radius, 12, { angle: -Math.PI / 2, spread: 1.2 });
           g.camera.shakePreset('medium');
         }
@@ -443,6 +497,33 @@
       g.audio.play('teleport');
     }
 
+    _vault(player) {
+      const g = this.game;
+      const s = player.stats;
+      const V = SK.vault;
+      this._tryParry(player);
+      const dist = V.distance * (s.eSkillScale || 1);
+      const dx = Math.cos(player.aim), dy = Math.sin(player.aim);
+      this._meleeCone(player, player.aim, dist + 70, 0.55, s.damage * V.damageMult * s.skillDamageMult, { skill: true });
+      this._clearAround(player.x + dx * dist * 0.5, player.y + dy * dist * 0.5, 90);
+      player.startBurst(dx, dy, dist, V.duration, V.iframes);
+      g.effects.push(new BR.SlashFx({ x: player.x, y: player.y, angle: player.aim, radius: dist * 0.9, arc: 0.5, dir: 1, color: '255,230,160', width: 18, life: 0.22 }));
+      g.particles.emit('dust', player.x, player.y, 14, { radius: 12 });
+      g.camera.shakePreset('small');
+      g.audio.play('dash');
+    }
+
+    _overheat(player) {
+      const g = this.game;
+      const s = player.stats;
+      player.overheatTimer = SK.overheat.duration * (s.eSkillScale || 1);
+      this._tryParry(player);
+      this._clearAround(player.x, player.y, 130);
+      g.effects.push(new BR.RingFx({ x: player.x, y: player.y, r0: 10, r1: 130, color: '255,140,60', width: 12, life: 0.35 }));
+      g.particles.emitRing('spark', player.x, player.y, 14, 18, { speedMult: 1.4, color: '255,140,60' });
+      g.audio.play('nova');
+    }
+
     _bulwark(player) {
       const g = this.game;
       player.bulwarkTimer = SK.bulwark.duration * (player.stats.eSkillScale || 1);
@@ -475,6 +556,7 @@
       if (s.berserker) mult *= 1 + s.berserker * (1 - player.hp / s.maxHp);
       if (s.vengeance && player.rageTimer > 0) mult *= 1 + s.vengeance;
       if (s.executioner && boss.hpRatio <= 0.2) mult *= 1 + s.executioner;
+      if (s.giantSlayer && boss.hpRatio >= 0.7) mult *= 1 + s.giantSlayer;
       if (s.counterBuff && player.counterTimer > 0) mult *= 1 + s.counterBuff;
       if (opts.finisher && s.finisherBonus) mult *= 1 + s.finisherBonus;
       const crit = opts.canCrit !== false && Math.random() < s.critChance;
@@ -516,10 +598,11 @@
       g.particles.emit(crit ? 'crit' : 'hit', x, y, crit ? 14 : 8, { angle, spread: 1.6 });
       const big = crit || opts.skill || opts.finisher;
       g.spawnDamageNumber(x, y - 10, amount, crit ? '#ffd84a' : opts.skill ? '#8ff3ff' : opts.finisher ? '#d6fbff' : '#ffffff', crit ? 26 : big ? 22 : 17);
-      g.hitstop = Math.max(g.hitstop, big ? C.COMBAT.critHitstop : C.COMBAT.hitstop);
+      if (!opts.noStop) g.hitstop = Math.max(g.hitstop, big ? C.COMBAT.critHitstop : C.COMBAT.hitstop);
       if (crit || opts.skill) g.camera.shakePreset('small');
       g.audio.play(crit ? 'crit' : 'bossHit');
 
+      if (crit && s.critEnergy) player.energy = Math.min(P.maxEnergy, player.energy + s.critEnergy);
       if (crit && s.critHeal) {
         const healed = player.heal(s.critHeal);
         if (healed > 0) g.particles.emit('heal', player.x, player.y, 4);

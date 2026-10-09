@@ -627,7 +627,10 @@
       }
       this.checkAchievements();
       BR.SaveSystem.save(this.saveData);
-      this.showBanner(boss.elite ? 'ELITE DEFEATED' : 'BOSS DEFEATED', `+${soul} SOUL`, '#ffd76a', R.victoryDelay);
+      const trophy = !this.run.rush ? BR.RELICS.find((r) => r.apex === boss.id) : null;
+      let trophyText = '';
+      if (trophy && !this.run.relics.includes(trophy)) { this.acquireRelic(trophy); trophyText = ` · APEX 유물: ${trophy.name}`; }
+      this.showBanner(boss.elite ? 'ELITE DEFEATED' : 'BOSS DEFEATED', `+${soul} SOUL${trophyText}`, '#ffd76a', R.victoryDelay);
     }
 
     onPlayerDeath() {

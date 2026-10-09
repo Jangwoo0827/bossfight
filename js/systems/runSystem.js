@@ -78,7 +78,9 @@
       this.stage++;
       let soul = S.perBossBase + S.perStage * this.stage;
       if (this.isComplete) soul += S.clearBonus;
-      soul = Math.round(soul * this.difficulty.soul * this.soulMult * (elite ? R.elite.soul : 1));
+      const dif = (BR.BOSS_BY_ID[id] || {}).difficulty || 1;
+      const apexMult = dif > 5 ? 1 + 0.25 * (dif - 5) : 1;   // APEX bosses pay more
+      soul = Math.round(soul * this.difficulty.soul * this.soulMult * (elite ? R.elite.soul : 1) * apexMult);
       this.soulEarned += soul;
       return soul;
     }
@@ -91,7 +93,7 @@
     }
 
     availableRelics() {
-      return BR.RELICS.filter((r) => !this.relics.includes(r));
+      return BR.RELICS.filter((r) => !r.apex && !this.relics.includes(r));
     }
 
     rollRelics(n) {

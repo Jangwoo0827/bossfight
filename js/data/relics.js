@@ -23,6 +23,17 @@
       apply: (s) => { s.burn += 0.4; } },
     { id: 'mirror', icon: '◐', name: 'Mirror Shield', desc: '보스 투사체에 맞을 때 30% 확률로\n무효화하고 되돌려 보낸다',
       apply: (s) => { s.reflectChance += 0.3; } },
+    // APEX trophies: dropped by the five APEX bosses, never offered in the normal relic choice
+    { id: 'moltenheart', apex: 'magmaTitan', icon: '❖', name: 'Molten Heart', desc: '[APEX] 피해량 +20%\n공격이 보스를 불태운다 (초당 30%)',
+      apply: (s) => { s.damageMult += 0.2; s.burn += 0.3; } },
+    { id: 'prismshard', apex: 'prismSeraph', icon: '◇', name: 'Prism Shard', desc: '[APEX] 투사체 +1\n기본 투사체가 관통한다',
+      apply: (s) => { s.projectileCount += 1; s.wavePierce = true; } },
+    { id: 'nightbloom', apex: 'nightEmpress', icon: '✿', name: 'Night Bloom', desc: '[APEX] 보스전마다 첫 피격 무효 +1\nPARRY 회복 +10',
+      apply: (s, p) => { s.barrier += 1; if (p) p.barrier += 1; s.parryHealBonus += 10; } },
+    { id: 'tidalcharm', apex: 'tideLeviathan', icon: '≈', name: 'Tidal Charm', desc: '[APEX] 스킬 쿨다운 -25%\n에너지 회복 +30%',
+      apply: (s) => { s.skillCooldownMult *= 0.75; s.energyRegenMult += 0.3; } },
+    { id: 'brokencrown', apex: 'ruinKing', icon: '♛', name: 'Broken Crown', desc: '[APEX] 치명타 확률 +20%\n치명타 피해 +50%',
+      apply: (s) => { s.critChance += 0.2; s.critMultiplier += 0.5; } },
   ];
 
   BR.RELIC_BY_ID = {};
@@ -43,6 +54,10 @@
       apply: (s, p) => { s.thorns *= 2; s.barrier += 1; if (p) p.barrier += 1; } },
     { id: 'bloodfrenzy', name: 'Blood Frenzy', requires: ['berserker', 'vengeance'], desc: '체력 50% 이하일 때 공격 속도 +35%',
       apply: (s) => { s.bloodFrenzy = true; } },
+    { id: 'flowstate', name: 'Flow State', requires: ['spiritflow', 'guardreflex'], desc: 'PARRY 성공 시 E 스킬 쿨다운 완전 초기화',
+      apply: (s) => { s.parryReset = true; } },
+    { id: 'titanbane', name: 'Titanbane', requires: ['giantslayer', 'dmg25'], desc: '거대 보스 피해 보너스 +30%p',
+      apply: (s) => { s.giantSlayer += 0.3; } },
     { id: 'afterimage', name: 'Afterimage', requires: ['echo', 'atkspd'], desc: '추가 피해(Echo) 확률 +20%',
       apply: (s) => { s.echoChance += 0.2; } },
   ];

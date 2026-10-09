@@ -47,6 +47,7 @@
       this.qCharge = -1;          // < 0 = not charging
       this.eTimer = 0;
       this.bulwarkTimer = 0;
+      this.overheatTimer = 0;
       this.comboStep = 0;
       this.comboTimer = 0;
       this.swingSide = 1;
@@ -163,6 +164,7 @@
       this.rageTimer -= dt;
       this.eTimer -= dt;
       this.bulwarkTimer -= dt;
+      this.overheatTimer -= dt;
       this.comboTimer -= dt;
       this.counterTimer -= dt;
       this.hasteTimer -= dt;
@@ -199,7 +201,8 @@
     _attack() {
       const frenzy = this.stats.bloodFrenzy && this.hp < this.stats.maxHp * 0.5 ? 1.35 : 1;
       const haste = this.hasteTimer > 0 ? 1 + this.stats.dashHaste : 1;
-      this.attackTimer = this.character.attackCooldown / (this.stats.attackSpeedMult * frenzy * haste);
+      const heat = this.overheatTimer > 0 ? 1.7 : 1;
+      this.attackTimer = this.character.attackCooldown / (this.stats.attackSpeedMult * frenzy * haste * heat);
       if (this.comboTimer <= 0) this.comboStep = 0;
       this.comboStep++;
       const finisher = this.comboStep >= this.comboLength;
@@ -282,6 +285,7 @@
       }
 
       // Bulwark shield
+      if (this.overheatTimer > 0) Draw.glow(ctx, this.x, this.y, 52, '255,120,50', 0.35 + 0.2 * Math.sin(time * 20));
       if (this.bulwarkTimer > 0) {
         const pulse = 0.6 + 0.4 * Math.sin(time * 25);
         Draw.glow(ctx, this.x, this.y, 46, '157,255,138', 0.5);
@@ -305,6 +309,20 @@
         ctx.beginPath();
         ctx.arc(16, 0, 4, 0, Math.PI * 2);
         ctx.fill();
+      } else if (this.character.attack === 'spear') {
+        ctx.fillStyle = '#8a6a3a';
+        ctx.fillRect(-6, -1.5, 40, 3);
+        ctx.fillStyle = '#fff2c8';
+        ctx.beginPath();
+        ctx.moveTo(48, 0);
+        ctx.lineTo(32, -5);
+        ctx.lineTo(32, 5);
+        ctx.closePath();
+        ctx.fill();
+      } else if (this.character.attack === 'flame') {
+        ctx.fillStyle = '#5a3a30';
+        ctx.fillRect(2, -4, 14, 8);
+        Draw.glow(ctx, 20, 0, 12 + 3 * Math.sin(time * 30), '255,130,50', 0.9);
       } else if (this.character.attack === 'hammer') {
         ctx.fillStyle = '#8a8f98';
         ctx.fillRect(2, -2, 16, 4);

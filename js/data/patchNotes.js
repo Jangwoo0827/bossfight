@@ -4,6 +4,21 @@
 
   BR.PATCH_NOTES = [
     {
+      version: '1.13.0',
+      title: 'Trophies & Two New Hunters',
+      sections: [
+        ['NEW', [
+          '캐릭터 2종 — LANCER(장창 · 투창 · 돌진, 3회 클리어로 해금) · PYROMANCER(화염 방사 · 화염 파동 · 과열, 6회 클리어로 해금)',
+          'APEX 보스 전용 보상 — 처치하면 보스마다 고유 유물을 획득 (Molten Heart · Prism Shard · Night Bloom · Tidal Charm · Broken Crown) + SOUL 보너스 (★6 +25% ~ ★10 +125%)',
+          'PARRY 빌드 업그레이드 5종 — Sharpened Riposte · Lingering Daze · Spirit Flow · Guard Reflex · Shockwave Parry',
+          '기타 업그레이드 3종 — Giant Slayer · Iron Will · Crit Flow (RUN 업그레이드 총 49종)',
+          'SOUL 트리에 PARRY 가지 추가 — Counterforce(반격 피해) · Dazing Counter(기절 시간)',
+          '시너지 2종 — Flow State · Titanbane',
+          '업적 3종 — Spear of Dawn · Pyre Walker · Apex Predator',
+        ]],
+      ],
+    },
+    {
       version: '1.12.0',
       title: 'Purple Stars',
       sections: [

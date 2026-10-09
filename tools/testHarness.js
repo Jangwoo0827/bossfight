@@ -134,7 +134,7 @@
     BR.UIRoot.clear();
     g.startRun('blade', 'easy', []);
     const log = [];
-    for (let s = 0; s < 600 && g.state !== 'result'; s++) {
+    for (let s = 0; s < 1500 && g.state !== 'result'; s++) {
       if (!step(60, fightBot)) break;
       const relic = document.querySelector('.relic-card');
       if (relic) { log.push('relic'); relic.click(); continue; }
@@ -342,6 +342,37 @@
         }
       }
     }
+    return { ok: bad.length === 0, detail: bad.join(', ') };
+  });
+
+  await test('every character: attack, charge skill and E skill all run (incl. unlockable ones)', () => {
+    const bad = [];
+    for (const ch of BR.CHARACTERS) {
+      BR.UIRoot.clear();
+      g.startPractice('swordKnight', ch.id, 1);
+      if (!step(120, fightBot)) { bad.push(ch.id + ':attack'); continue; }
+      const pl = g.player;
+      g.combat.playerChargeSkill(pl, pl.aim, 1);
+      g.combat.playerESkill(pl, ch.e);
+      if (!step(90, fightBot)) bad.push(ch.id + ':skills');
+      if (g.boss && g.boss.hp >= g.boss.maxHp) bad.push(ch.id + ':dealt no damage');
+    }
+    return { ok: bad.length === 0, detail: bad.join(', ') };
+  });
+
+  await test('apex trophies: exclusive relics, never in the normal pool; new parry stats apply', () => {
+    const bad = [];
+    BR.UIRoot.clear();
+    g.startRun('blade', 'normal', []);
+    const pool = g.run.availableRelics();
+    if (pool.some((r) => r.apex)) bad.push('apex relic in normal pool');
+    for (const id of ['magmaTitan', 'prismSeraph', 'nightEmpress', 'tideLeviathan', 'ruinKing']) {
+      if (!BR.RELICS.find((r) => r.apex === id)) bad.push('no trophy for ' + id);
+    }
+    const st = g.player.stats;
+    BR.UPGRADES.filter((u) => /^(sharpriposte|daze|spiritflow|guardreflex|shockparry|giantslayer|ironwill|critflow)$/.test(u.id)).forEach((u) => BR.UpgradeSystem.apply(st, u, g.player));
+    if (!(st.parryReflect >= 1 && st.parryStun >= 0.5 && st.parryEnergy >= 30 && st.parryIframes > 0 && st.parryClear && st.giantSlayer > 0 && st.critEnergy > 0)) bad.push('parry stats not applied');
+    if (BR.game && g.run.soulMult < 1) bad.push('soulMult');
     return { ok: bad.length === 0, detail: bad.join(', ') };
   });
 

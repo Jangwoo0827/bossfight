@@ -23,6 +23,9 @@
     { id: 'char_blade', icon: '/', name: 'Blade Saint', desc: 'BLADEMASTER로 클리어', progress: (s) => [s.clearsByCharacter.blade || 0, 1] },
     { id: 'char_gunner', icon: '•', name: 'Fastest Draw', desc: 'GUNSLINGER로 클리어', progress: (s) => [s.clearsByCharacter.gunner || 0, 1] },
     { id: 'char_arcanist', icon: '✶', name: 'Archmage', desc: 'ARCANIST로 클리어', progress: (s) => [s.clearsByCharacter.arcanist || 0, 1] },
+    { id: 'char_lancer', icon: '↟', name: 'Spear of Dawn', desc: 'LANCER로 클리어', progress: (s) => [s.clearsByCharacter.lancer || 0, 1] },
+    { id: 'char_pyro', icon: '✹', name: 'Pyre Walker', desc: 'PYROMANCER로 클리어', progress: (s) => [s.clearsByCharacter.pyro || 0, 1] },
+    { id: 'apex_all', icon: '♛', name: 'Apex Predator', desc: 'APEX 보스 5종을 모두 처치', progress: (s) => [['magmaTitan', 'prismSeraph', 'nightEmpress', 'tideLeviathan', 'ruinKing'].filter((id) => (s.bossKills[id] || 0) > 0).length, 5] },
     { id: 'char_guardian', icon: '■', name: 'Unbreakable', desc: 'IRON GUARDIAN으로 클리어', progress: (s) => [s.clearsByCharacter.guardian || 0, 1] },
 
     { id: 'rush_clear', icon: '⚑', name: 'Gauntlet', desc: 'BOSS RUSH (12연전) 클리어', progress: (s) => [s.rushBest && s.rushBest.time ? 1 : 0, 1] },
