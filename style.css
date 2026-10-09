@@ -238,7 +238,7 @@ html, body {
 
 /* ---------- Records ---------- */
 .rec-wrap { display: flex; gap: 22px; width: 1180px; height: 620px; }
-.rec-left { width: 360px; display: flex; flex-direction: column; gap: 6px; overflow: hidden; }
+.rec-left { width: 360px; display: flex; flex-direction: column; gap: 6px; overflow-y: auto; overflow-x: hidden; padding-right: 4px; }
 .rec-right { flex: 1; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .rec-title { font: 700 15px Georgia, serif; letter-spacing: 4px; color: #fff; margin-top: 6px; }
 .rec-title small { font: 600 12px "Segoe UI", sans-serif; color: #ffd76a; letter-spacing: 1px; margin-left: 8px; }
@@ -246,7 +246,7 @@ html, body {
 .rec-row { display: flex; justify-content: space-between; font-size: 12.5px; color: #a8a1bf; padding: 2px 0; }
 .rec-row b { color: #fff; font-weight: 600; }
 .bestiary { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
-.beast { display: flex; justify-content: space-between; align-items: center; padding: 4px 8px; font-size: 11px; background: rgba(20,14,32,0.85); border-left: 3px solid var(--accent); }
+.beast { display: flex; justify-content: space-between; align-items: center; padding: 3px 8px; font-size: 11px; background: rgba(20,14,32,0.85); border-left: 3px solid var(--accent); }
 .beast.unknown { opacity: 0.4; border-left-color: #444; }
 .beast .bname { color: #e9e6f2; letter-spacing: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .beast .bkd { color: #fff; font-weight: 700; white-space: nowrap; }
