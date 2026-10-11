@@ -1,7 +1,7 @@
 /* Optional online features (global leaderboard, cloud save) on top of a supabasebutno backend.
    Disabled unless a server URL + anon key are configured, so builds without one behave exactly as before.
    Configure BR.CONFIG.ONLINE (shipped), or localStorage 'bossRush.online' = {"url":"…","anonKey":"…"} (testing; empty url forces it off).
-   On localhost the local-dev server from BR.CONFIG.ONLINE_DEV is used automatically.
+   On localhost the local-dev server from BR.CONFIG.ONLINE_DEV is used instead of the public one.
    Every method resolves — never rejects — with { ok, … } so callers never need try/catch. */
 (function () {
   'use strict';
@@ -12,7 +12,7 @@
 
   function readConfig() {
     const local = ['localhost', '127.0.0.1', '[::1]'].includes(window.location.hostname);
-    const base = (local && !(BR.CONFIG.ONLINE || {}).url ? BR.CONFIG.ONLINE_DEV : BR.CONFIG.ONLINE) || {};
+    const base = (local ? BR.CONFIG.ONLINE_DEV : BR.CONFIG.ONLINE) || {};
     let cfg = { url: base.url || '', anonKey: base.anonKey || '' };
     try {
       const o = JSON.parse(window.localStorage.getItem(STORE_KEY));
@@ -48,7 +48,12 @@
     async init() {
       if (!this.enabled || this.client) return;
       try {
-        this.client = window.supabasebutno.createClient(this.cfg.url, this.cfg.anonKey, { auth: { storageKey: 'bossRush.online.auth' } });
+        const opts = { auth: { storageKey: 'bossRush.online.auth' } };
+        if (/\.ngrok(-free)?\.(dev|app|io)$/i.test(new URL(this.cfg.url).hostname)) {
+          // ngrok's free plan answers browser requests with a warning page unless this header is present
+          opts.fetch = (input, init) => window.fetch(input, { ...init, headers: { ...Object.fromEntries(new Headers((init && init.headers) || {})), 'ngrok-skip-browser-warning': '1' } });
+        }
+        this.client = window.supabasebutno.createClient(this.cfg.url, this.cfg.anonKey, opts);
         this.client.auth.onAuthStateChange((event, session) => { this.user = session ? session.user : null; });
         const { data } = await this.client.auth.getSession();
         this.user = data && data.session ? data.session.user : null;

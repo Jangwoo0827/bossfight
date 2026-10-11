@@ -118,7 +118,8 @@ BR.CONFIG = {
   SAVE_KEY: 'bossRushRPG.save.v1',
 
   // Online features (global leaderboard, cloud save). Empty = feature hidden; the game works fully offline.
-  ONLINE: { url: '', anonKey: '' },
+  // Public server (ngrok tunnel to the author's PC: the leaderboard is offline whenever that PC / tunnel is off). The anon key is public by design.
+  ONLINE: { url: 'https://laurel-spry-gladly.ngrok-free.dev', anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsInJlZiI6ImFvM3dybGFsM3NjaTR1c2oiLCJrdiI6MSwiaXNzIjoic3VwYWJhc2VidXRubyIsImlhdCI6MTc5MTcyNTQzMn0.11eP-Rqh7TvjRyqxW_iMKVjlFZ177H9RyHMfVVf9XKM' },
   // Used only when the page itself is served from localhost / 127.0.0.1 (local-first development against `npm run local` in supabasebutno).
   // The anon key is public by design and only works with that local server.
   ONLINE_DEV: { url: 'http://127.0.0.1:8787', anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsInJlZiI6ImFvM3dybGFsM3NjaTR1c2oiLCJrdiI6MSwiaXNzIjoic3VwYWJhc2VidXRubyIsImlhdCI6MTc5MTcyNTQzMn0.11eP-Rqh7TvjRyqxW_iMKVjlFZ177H9RyHMfVVf9XKM' },
