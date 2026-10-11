@@ -61,6 +61,7 @@
             <button class="btn" data-action="records">Records</button>
             <button class="btn" data-action="settings">Settings</button>
           </div>
+          ${BR.Online && BR.Online.enabled ? '<button class="btn" data-action="online">Online</button>' : ''}
           <button class="btn small" data-action="notes">Patch Notes${g.saveData.settings.lastSeenVersion !== BR.GAME_VERSION ? ' <span class="new-badge">NEW</span>' : ''}</button>
         </div>
         <div class="controls">
@@ -85,6 +86,7 @@
         tutorial: () => g.startTutorial(),
         shop: () => this.showShop(),
         records: () => g.ui.records.show(() => this.showMain()),
+        online: () => g.ui.online.show(() => this.showMain()),
         notes: () => this.showPatchNotes(),
         settings: () => this.showSettings(() => this.showMain()),
       });

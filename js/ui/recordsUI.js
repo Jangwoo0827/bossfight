@@ -110,13 +110,15 @@
         <div class="subheading">이 기기의 최고 기록 TOP 10 · 클리어 시간 순 (미클리어는 도달한 보스 순)</div>
         <div class="seg lb-tabs">${tabs.map((t) => `<button class="btn ${t.id === tab ? 'active' : ''}" style="--accent:${t.color}" data-tab="${t.id}">${t.name}</button>`).join('')}</div>
         <div class="lb-list">${rows}</div>
-        <div class="btn-row" style="margin-top:14px"><button class="btn" data-action="back">Back</button></div>
+        <div class="btn-row" style="margin-top:14px"><button class="btn" data-action="back">Back</button>${BR.Online && BR.Online.enabled ? '<button class="btn" data-action="global">Global</button>' : ''}</div>
       `);
       panel.querySelectorAll('[data-tab]').forEach((el) => el.addEventListener('click', () => {
         g.audio.play('button');
         this.showLeaderboard(onBack, el.dataset.tab);
       }));
       panel.querySelector('[data-action="back"]').addEventListener('click', () => { g.audio.play('button'); onBack(); });
+      const globalBtn = panel.querySelector('[data-action="global"]');
+      if (globalBtn) globalBtn.addEventListener('click', () => { g.audio.play('button'); g.ui.online.showLeaderboard(() => this.showLeaderboard(onBack, tab), tab); });
     }
   }
 

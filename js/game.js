@@ -35,6 +35,7 @@
 
       this.ui = {
         records: new BR.RecordsUI(this),
+        online: new BR.OnlineUI(this),
         menu: new BR.MenuUI(this),
         reward: new BR.RewardUI(this),
         bossSelect: new BR.BossSelectUI(this),
@@ -772,6 +773,7 @@
       this.music.play('menu');
       if (cleared) this.audio.play('clear');
       this.ui.result.show(cleared);
+      this.ui.online.submitFromResult(this.run, cleared);
     }
 
     abandonRun() {

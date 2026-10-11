@@ -455,3 +455,17 @@ body { touch-action: none; }
 .char-card .char-stats { font-size: 10px; flex-wrap: wrap; }
 .char-card .name { font-size: 15px; letter-spacing: 1px; }
 .char-card .tag { font-size: 10px; }
+
+/* ---------- Online (account, cloud save, global leaderboard) ---------- */
+.online-form { gap: 14px; }
+.online-form label { display: flex; flex-direction: column; gap: 6px; font-size: 14px; letter-spacing: 1px; color: #bdb4d6; }
+.online-form label small { color: #867fa0; letter-spacing: 0; }
+.online-form input { pointer-events: auto; background: #0c0814; color: #eee9fa; border: 1px solid rgba(255,255,255,0.18); padding: 9px 11px; font: 16px inherit; letter-spacing: 0; user-select: text; }
+.online-form input:focus { outline: none; border-color: #ff8099; }
+.online-form .save-msg { min-height: 20px; }
+.cloud-row { display: flex; justify-content: space-between; gap: 16px; font-size: 14px; color: #d8d1ea; }
+.cloud-row span { text-align: right; max-width: 340px; }
+.online-status { margin-top: 8px; font-size: 13px; letter-spacing: 1px; color: #7fe3ff; text-align: center; }
+.lb-row.global { grid-template-columns: 50px 190px 130px 80px 150px 1fr; }
+.lb-row.global.me { border-color: rgba(127,227,255,0.6); }
+.lb-name { font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

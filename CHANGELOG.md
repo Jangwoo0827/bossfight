@@ -2,6 +2,12 @@
 
 The in-game version of this list is under **PATCH NOTES** on the main menu (`js/data/patchNotes.js`).
 
+## Unreleased — Online (optional)
+
+- 온라인 기능(전 세계 순위표 · 클라우드 세이브)을 추가. 서버 주소를 설정하지 않으면 메뉴에 나타나지 않으며 게임은 이전과 똑같이 동작한다
+- `js/vendor/supabasebutno.min.js` = supabasebutno JS SDK(자체 호스팅 BaaS), `js/net/online.js` = 연동 로직, `js/ui/onlineUI.js` = 화면
+- 설정: `BR.CONFIG.ONLINE = { url, anonKey }`. localhost에서 열면 `ONLINE_DEV`(로컬 서버)가 자동 사용된다
+
 ## v1.14.0 — Cataclysm
 
 ### NEW
