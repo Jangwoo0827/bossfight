@@ -340,6 +340,7 @@ body { touch-action: none; }
 .tag-changed { background: rgba(143,183,255,0.15); color: #8fb7ff; border: 1px solid rgba(143,183,255,0.45); }
 .tag-balance { background: rgba(255,154,74,0.15); color: #ffb37a; border: 1px solid rgba(255,154,74,0.45); }
 .tag-fixed { background: rgba(255,77,106,0.15); color: #ff8da0; border: 1px solid rgba(255,77,106,0.45); }
+.tag-note { background: rgba(200,190,230,0.12); color: #c9c0e6; border: 1px solid rgba(200,190,230,0.4); }
 .note-sec ul { list-style: none; font-size: 13.5px; color: #d8d1ea; line-height: 1.75; }
 .note-sec li::before { content: '· '; color: #8d86a6; }
 

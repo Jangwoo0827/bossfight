@@ -2,7 +2,7 @@
 
 The in-game version of this list is under **PATCH NOTES** on the main menu (`js/data/patchNotes.js`).
 
-## Unreleased — Online (optional)
+## v1.15.0 — Online
 
 - 온라인 기능(전 세계 순위표 · 클라우드 세이브)을 추가. 서버 주소를 설정하지 않으면 메뉴에 나타나지 않으며 게임은 이전과 똑같이 동작한다
 - Firebase(Auth + Firestore) 기반. `js/net/online.js` = 연동 로직(SDK는 필요할 때 CDN에서 지연 로딩), `js/ui/onlineUI.js` = 화면, `firebase/firestore.rules` = 보안 규칙
