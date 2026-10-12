@@ -120,7 +120,14 @@ BR.CONFIG = {
   // Online features (global leaderboard, cloud save) via Firebase Auth + Firestore (see firebase/firestore.rules).
   // null = feature hidden; the game works fully offline. Fill with the Firebase web-app config (it is public by design):
   // { apiKey: '…', authDomain: '…', projectId: '…', appId: '…' }
-  ONLINE: { firebase: null },
+  ONLINE: {
+    firebase: {
+      apiKey: 'AIzaSyCBe10NkGqqIxkBjUuHiVgYdkHX8wFfXN4',
+      authDomain: 'bossrush-5bb6c.firebaseapp.com',
+      projectId: 'bossrush-5bb6c',
+      appId: '1:253177225580:web:d43e7a33c788f6568b9349',
+    },
+  },
 
   COLORS: {
     player: '#5ee7ff',
