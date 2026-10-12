@@ -1,0 +1,58 @@
+rules_version = '2';
+
+// Boss Rush online: global leaderboard + cloud save.
+// Paste into Firebase console -> Firestore Database -> Rules -> Publish.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // One document per player per board: boards/<board>/scores/<uid>
+    // <board> = easy | normal | hard | nightmare | cataclysm | rush | daily-YYYY-MM-DD
+    match /boards/{board}/scores/{uid} {
+      allow read: if true;
+
+      allow create: if request.auth != null && request.auth.uid == uid && validScore(board);
+
+      // A player can only replace their own entry with a strictly better one
+      allow update: if request.auth != null && request.auth.uid == uid && validScore(board)
+        && request.resource.data.sort > resource.data.sort;
+
+      allow delete: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // Cloud save: boards nobody else can read. `json` holds the stringified save.
+    match /saves/{uid} {
+      allow read, delete: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['json', 'updated', 'version'])
+        && request.resource.data.keys().hasAll(['json', 'updated'])
+        && request.resource.data.json is string
+        && request.resource.data.json.size() < 400000
+        && request.resource.data.updated == request.time
+        && (!('version' in request.resource.data) || (request.resource.data.version is string && request.resource.data.version.size() <= 20));
+    }
+
+    // Everything else is closed
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // `sort` is a single number (higher = better) so the leaderboard needs no composite index:
+    //   clear:  1e12 + 1e9 - time_ms     (faster clear = higher)
+    //   fail:   stage*1e9 + 1e9 - time_ms (deeper = higher, then faster)
+    function validScore(board) {
+      let d = request.resource.data;
+      return board.matches('^[a-z0-9-]{1,24}$')
+        && d.keys().hasOnly(['uid', 'name', 'character', 'time_ms', 'stage', 'cleared', 'mods', 'sort', 'at'])
+        && d.keys().hasAll(['uid', 'name', 'character', 'time_ms', 'stage', 'cleared', 'mods', 'sort', 'at'])
+        && d.uid == request.auth.uid
+        && d.name is string && d.name.size() >= 1 && d.name.size() <= 16
+        && d.character is string && d.character.size() <= 24
+        && d.mods is string && d.mods.size() <= 80
+        && d.time_ms is int && d.time_ms >= 1000 && d.time_ms <= 86400000
+        && d.stage is int && d.stage >= 0 && d.stage <= 12
+        && d.cleared is bool
+        && d.sort == (d.cleared ? 1000000000000 : d.stage * 1000000000) + 1000000000 - d.time_ms
+        && d.at == request.time;
+    }
+  }
+}

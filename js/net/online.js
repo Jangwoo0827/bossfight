@@ -1,93 +1,147 @@
-/* Optional online features (global leaderboard, cloud save) on top of a supabasebutno backend.
-   Disabled unless a server URL + anon key are configured, so builds without one behave exactly as before.
-   Configure BR.CONFIG.ONLINE (shipped), or localStorage 'bossRush.online' = {"url":"…","anonKey":"…"} (testing; empty url forces it off).
-   On localhost the local-dev server from BR.CONFIG.ONLINE_DEV is used instead of the public one.
-   Every method resolves — never rejects — with { ok, … } so callers never need try/catch. */
+/* Optional online features (global leaderboard, cloud save) on top of Firebase (Auth + Firestore).
+   Disabled unless a Firebase web config is set, so builds without one behave exactly as before.
+   Configure BR.CONFIG.ONLINE = { firebase: { apiKey, authDomain, projectId, appId } },
+   or (testing) localStorage 'bossRush.online' = {"firebase":{…}} — {"firebase":null} forces it off.
+   The Firebase SDK is loaded lazily from Google's CDN the first time online is needed, so the game
+   itself never waits for (or breaks without) the network.
+   Every method resolves — never rejects — with { ok, … } so callers never need try/catch.
+   Data model + security rules: firebase/firestore.rules. */
 (function () {
   'use strict';
 
   const STORE_KEY = 'bossRush.online';
+  const SDK_VERSION = '10.14.1';
+  const SDK_FILES = ['firebase-app-compat.js', 'firebase-auth-compat.js', 'firebase-firestore-compat.js'];
   const MAX_NAME = 16;
-  const MAX_SAVE_BYTES = 400 * 1024;
+  const MAX_SAVE_CHARS = 380000;
+  const TIMEOUT_MS = 15000;
 
   function readConfig() {
-    const local = ['localhost', '127.0.0.1', '[::1]'].includes(window.location.hostname);
-    const base = (local ? BR.CONFIG.ONLINE_DEV : BR.CONFIG.ONLINE) || {};
-    let cfg = { url: base.url || '', anonKey: base.anonKey || '' };
+    let fb = (BR.CONFIG.ONLINE || {}).firebase || null;
     try {
       const o = JSON.parse(window.localStorage.getItem(STORE_KEY));
-      if (o && typeof o.url === 'string' && typeof o.anonKey === 'string') cfg = { url: o.url, anonKey: o.anonKey };
+      if (o && 'firebase' in o) fb = o.firebase;
     } catch (e) { /* no override */ }
-    return cfg;
+    return fb && fb.apiKey && fb.projectId ? fb : null;
   }
 
-  function friendly(error) {
-    if (!error) return '알 수 없는 오류';
-    if (error.status === 0 || /network|fetch|failed to/i.test(error.message || '')) return '서버에 연결할 수 없습니다';
-    return error.message || '요청이 실패했습니다';
+  function loadScript(src) {
+    return new Promise((resolve, reject) => {
+      const el = document.createElement('script');
+      el.src = src;
+      el.onload = resolve;
+      el.onerror = () => reject(new Error('sdk'));
+      document.head.appendChild(el);
+    });
   }
 
-  // Better result first: clears beat non-clears, then faster clear / deeper stage / faster time
-  function better(a, b) {
-    if (a.cleared !== b.cleared) return a.cleared;
-    if (a.cleared) return a.time_ms < b.time_ms;
-    if (a.stage !== b.stage) return a.stage > b.stage;
-    return a.time_ms < b.time_ms;
+  const withTimeout = (p) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej({ code: 'timeout' }), TIMEOUT_MS))]);
+
+  function friendly(e) {
+    const code = (e && e.code) || '';
+    const map = {
+      'auth/email-already-in-use': '이미 가입된 이메일입니다',
+      'auth/invalid-email': '이메일 형식이 올바르지 않습니다',
+      'auth/weak-password': '비밀번호는 6자 이상이어야 합니다',
+      'auth/invalid-credential': '이메일 또는 비밀번호가 올바르지 않습니다',
+      'auth/wrong-password': '이메일 또는 비밀번호가 올바르지 않습니다',
+      'auth/user-not-found': '이메일 또는 비밀번호가 올바르지 않습니다',
+      'auth/too-many-requests': '시도가 너무 많습니다. 잠시 후 다시 해주세요',
+      'auth/network-request-failed': '서버에 연결할 수 없습니다',
+      'auth/operation-not-allowed': '이메일 로그인이 꺼져 있습니다 (Firebase 설정 확인)',
+      'permission-denied': '권한이 없습니다',
+      unavailable: '서버에 연결할 수 없습니다',
+      timeout: '서버 응답이 없습니다',
+    };
+    return map[code] || '요청이 실패했습니다';
   }
 
   const Online = {
-    client: null,
-    user: null,
+    fb: null,
+    auth: null,
+    db: null,
+    user: null, // { id, email, name } — same shape the UI used with the previous backend
     ready: false,
+    _starting: null,
     cfg: readConfig(),
 
     get enabled() {
-      return !!(this.cfg.url && this.cfg.anonKey && window.supabasebutno);
+      return !!this.cfg;
     },
 
-    async init() {
-      if (!this.enabled || this.client) return;
+    // Loads the SDK, waits for the stored session to be restored. Safe to call repeatedly.
+    init() {
+      if (!this.enabled) return Promise.resolve();
+      if (!this._starting) this._starting = this._start();
+      return this._starting;
+    },
+
+    async _start() {
       try {
-        const opts = { auth: { storageKey: 'bossRush.online.auth' } };
-        if (/\.ngrok(-free)?\.(dev|app|io)$/i.test(new URL(this.cfg.url).hostname)) {
-          // ngrok's free plan answers browser requests with a warning page unless this header is present
-          opts.fetch = (input, init) => window.fetch(input, { ...init, headers: { ...Object.fromEntries(new Headers((init && init.headers) || {})), 'ngrok-skip-browser-warning': '1' } });
+        if (!window.firebase) {
+          for (const f of SDK_FILES) await loadScript(`https://www.gstatic.com/firebasejs/${SDK_VERSION}/${f}`);
         }
-        this.client = window.supabasebutno.createClient(this.cfg.url, this.cfg.anonKey, opts);
-        this.client.auth.onAuthStateChange((event, session) => { this.user = session ? session.user : null; });
-        const { data } = await this.client.auth.getSession();
-        this.user = data && data.session ? data.session.user : null;
+        const fb = window.firebase;
+        this.fb = fb.apps.length ? fb.app() : fb.initializeApp(this.cfg);
+        this.auth = fb.auth();
+        this.db = fb.firestore();
+        await new Promise((resolve) => {
+          let first = true;
+          this.auth.onAuthStateChanged((u) => {
+            this._setUser(u);
+            if (first) { first = false; resolve(); }
+          });
+        });
       } catch (e) {
-        this.client = null;
+        this.auth = null;
+        this.db = null;
+        this._starting = null; // allow a retry later
       }
       this.ready = true;
+    },
+
+    _setUser(u) {
+      this.user = u ? { id: u.uid, email: u.email || '', name: u.displayName || '' } : null;
+    },
+
+    get available() {
+      return !!(this.auth && this.db);
     },
 
     displayName() {
       const u = this.user;
       if (!u) return '';
-      const n = u.user_metadata && u.user_metadata.name;
-      return String(n || (u.email || '').split('@')[0] || 'player').slice(0, MAX_NAME);
+      return String(u.name || (u.email || '').split('@')[0] || 'player').slice(0, MAX_NAME);
     },
 
     async signUp(email, password, name) {
       await this.init();
-      if (!this.client) return { ok: false, error: '온라인 기능을 사용할 수 없습니다' };
+      if (!this.available) return { ok: false, error: '온라인 기능을 사용할 수 없습니다' };
       const nick = String(name || '').trim().slice(0, MAX_NAME);
       if (!nick) return { ok: false, error: '닉네임을 입력하세요' };
-      const { error } = await this.client.auth.signUp({ email, password, data: { name: nick } });
-      return error ? { ok: false, error: friendly(error) } : { ok: true };
+      try {
+        const cred = await withTimeout(this.auth.createUserWithEmailAndPassword(email, password));
+        await cred.user.updateProfile({ displayName: nick });
+        this._setUser(this.auth.currentUser);
+        return { ok: true };
+      } catch (e) {
+        return { ok: false, error: friendly(e) };
+      }
     },
 
     async signIn(email, password) {
       await this.init();
-      if (!this.client) return { ok: false, error: '온라인 기능을 사용할 수 없습니다' };
-      const { error } = await this.client.auth.signInWithPassword({ email, password });
-      return error ? { ok: false, error: friendly(error) } : { ok: true };
+      if (!this.available) return { ok: false, error: '온라인 기능을 사용할 수 없습니다' };
+      try {
+        await withTimeout(this.auth.signInWithEmailAndPassword(email, password));
+        return { ok: true };
+      } catch (e) {
+        return { ok: false, error: friendly(e) };
+      }
     },
 
     async signOut() {
-      if (this.client) await this.client.auth.signOut();
+      try { if (this.auth) await this.auth.signOut(); } catch (e) { /* local state is cleared below anyway */ }
       this.user = null;
       return { ok: true };
     },
@@ -95,102 +149,96 @@
     // ---- leaderboard ----------------------------------------------------
 
     boardKeyFor(run) {
-      if (run.daily) return `daily-${String(run.daily).slice(0, 16)}`;
+      if (run.daily) return `daily-${String(run.daily).replace(/[^0-9-]/g, '').slice(0, 10)}`;
       return run.rush ? 'rush' : run.difficulty.id;
+    },
+
+    // Higher = better. Mirrors the formula enforced in firebase/firestore.rules.
+    sortValue(cleared, stage, timeMs) {
+      return (cleared ? 1e12 : stage * 1e9) + 1e9 - timeMs;
     },
 
     // Registers the finished run if it beats the player's own best on that board.
     async submitRun(run, cleared) {
       await this.init();
-      if (!this.client) return { ok: false, status: 'off' };
+      if (!this.available) return { ok: false, status: 'off' };
       if (!this.user) return { ok: false, status: 'signed-out' };
       if (!run || run.mode !== 'run') return { ok: false, status: 'skipped' };
-      const entry = {
-        board: this.boardKeyFor(run),
-        name: this.displayName(),
-        character: run.character.id,
-        time_ms: Math.round(run.time * 1000),
-        stage: run.stage,
-        cleared: !!cleared,
-        mods: run.modifiers.map((m) => m.id).join(','),
-      };
-      if (entry.time_ms < 1000) return { ok: false, status: 'skipped' };
+      const board = this.boardKeyFor(run);
+      const timeMs = Math.round(run.time * 1000);
+      const stage = Math.max(0, Math.min(12, run.stage | 0));
+      if (timeMs < 1000 || timeMs > 86400000) return { ok: false, status: 'skipped' };
+      const sort = this.sortValue(!!cleared, stage, timeMs);
+      const ref = this.db.doc(`boards/${board}/scores/${this.user.id}`);
       try {
-        const q = this.client.from('scores').select('id,cleared,stage,time_ms').eq('user_id', this.user.id).eq('board', entry.board);
-        const { data: mine, error: readErr } = await q;
-        if (readErr) return { ok: false, status: 'error', error: friendly(readErr) };
-        const prev = (mine || []).map((r) => ({ id: r.id, cleared: !!r.cleared, stage: r.stage, time_ms: r.time_ms }));
-        if (prev.some((p) => !better(entry, p))) return { ok: true, status: 'not-better' };
-        const { data: rows, error } = await this.client.from('scores').insert({ ...entry, user_id: this.user.id }).select('id');
-        if (error) return { ok: false, status: 'error', error: friendly(error) };
-        const newId = rows && rows[0] && rows[0].id;
-        if (newId !== undefined && prev.length) {
-          // Keep a single (best) row per player per board
-          await this.client.from('scores').delete().eq('user_id', this.user.id).eq('board', entry.board).neq('id', newId);
-        }
+        const prev = await withTimeout(ref.get());
+        if (prev.exists && !(sort > prev.data().sort)) return { ok: true, status: 'not-better' };
+        await withTimeout(ref.set({
+          uid: this.user.id,
+          name: this.displayName(),
+          character: String(run.character.id).slice(0, 24),
+          time_ms: timeMs,
+          stage,
+          cleared: !!cleared,
+          mods: run.modifiers.map((m) => m.id).join(',').slice(0, 80),
+          sort,
+          at: window.firebase.firestore.FieldValue.serverTimestamp(),
+        }));
         return { ok: true, status: 'submitted' };
       } catch (e) {
-        return { ok: false, status: 'error', error: '서버에 연결할 수 없습니다' };
+        return { ok: false, status: 'error', error: friendly(e) };
       }
     },
 
-    // Top rows of a board: [{ name, character, cleared, stage, time_ms, mods, user_id }]
+    // Top rows of a board: [{ user_id, name, character, cleared, stage, time_ms, mods }]
     async fetchBoard(board, limit) {
       await this.init();
-      if (!this.client) return { ok: false, error: '온라인 기능을 사용할 수 없습니다', rows: [] };
-      const cols = 'user_id,name,character,cleared,stage,time_ms,mods';
+      if (!this.available) return { ok: false, error: '온라인 기능을 사용할 수 없습니다', rows: [] };
       try {
-        const [clears, fails] = await Promise.all([
-          this.client.from('scores').select(cols).eq('board', board).eq('cleared', true).order('time_ms', { ascending: true }).limit(50),
-          this.client.from('scores').select(cols).eq('board', board).eq('cleared', false).order('stage', { ascending: false }).order('time_ms', { ascending: true }).limit(50),
-        ]);
-        const err = clears.error || fails.error;
-        if (err) return { ok: false, error: friendly(err), rows: [] };
-        const seen = new Set();
+        const snap = await withTimeout(this.db.collection(`boards/${board}/scores`).orderBy('sort', 'desc').limit(limit || 10).get());
         const rows = [];
-        for (const r of [...(clears.data || []), ...(fails.data || [])]) {
-          if (seen.has(r.user_id)) continue; // one row per player
-          seen.add(r.user_id);
-          rows.push({ ...r, cleared: !!r.cleared });
-        }
-        rows.sort((a, b) => (better(a, b) ? -1 : better(b, a) ? 1 : 0));
-        return { ok: true, rows: rows.slice(0, limit || 10) };
+        snap.forEach((doc) => {
+          const d = doc.data();
+          rows.push({ user_id: doc.id, name: String(d.name || ''), character: d.character, cleared: !!d.cleared, stage: d.stage, time_ms: d.time_ms, mods: d.mods || '' });
+        });
+        return { ok: true, rows };
       } catch (e) {
-        return { ok: false, error: '서버에 연결할 수 없습니다', rows: [] };
+        return { ok: false, error: friendly(e), rows: [] };
       }
     },
 
     // ---- cloud save -----------------------------------------------------
 
-    // Stored on the server: { v, save } (settings stay per-device on download, see downloadSave)
     async uploadSave(saveData) {
       await this.init();
-      if (!this.client || !this.user) return { ok: false, error: '로그인이 필요합니다' };
-      const data = { v: 1, save: saveData };
-      if (JSON.stringify(data).length > MAX_SAVE_BYTES) return { ok: false, error: '저장 데이터가 너무 큽니다' };
+      if (!this.available || !this.user) return { ok: false, error: '로그인이 필요합니다' };
+      const json = JSON.stringify({ v: 1, save: saveData });
+      if (json.length > MAX_SAVE_CHARS) return { ok: false, error: '저장 데이터가 너무 큽니다' };
       try {
-        const { error } = await this.client.from('cloud_saves').upsert(
-          { user_id: this.user.id, data, updated_at: new Date().toISOString(), app_version: String(BR.GAME_VERSION || '') },
-        );
-        return error ? { ok: false, error: friendly(error) } : { ok: true };
+        await withTimeout(this.db.doc(`saves/${this.user.id}`).set({
+          json,
+          updated: window.firebase.firestore.FieldValue.serverTimestamp(),
+          version: String(BR.GAME_VERSION || '').slice(0, 20),
+        }));
+        return { ok: true };
       } catch (e) {
-        return { ok: false, error: '서버에 연결할 수 없습니다' };
+        return { ok: false, error: friendly(e) };
       }
     },
 
-    // Returns { ok, exists, save, updatedAt, version }
+    // Returns { ok, exists, save, updatedAt (ISO string), version }
     async fetchCloudSave() {
       await this.init();
-      if (!this.client || !this.user) return { ok: false, error: '로그인이 필요합니다' };
+      if (!this.available || !this.user) return { ok: false, error: '로그인이 필요합니다' };
       try {
-        const { data, error } = await this.client.from('cloud_saves').select('data,updated_at,app_version').eq('user_id', this.user.id).maybeSingle();
-        if (error) return { ok: false, error: friendly(error) };
-        if (!data) return { ok: true, exists: false };
-        const save = data.data && data.data.save;
+        const doc = await withTimeout(this.db.doc(`saves/${this.user.id}`).get());
+        if (!doc.exists) return { ok: true, exists: false };
+        const d = doc.data();
+        const save = JSON.parse(d.json).save;
         if (!save || typeof save !== 'object' || typeof save.soul !== 'number') return { ok: false, error: '클라우드 저장 데이터가 올바르지 않습니다' };
-        return { ok: true, exists: true, save, updatedAt: data.updated_at, version: data.app_version };
+        return { ok: true, exists: true, save, updatedAt: d.updated && d.updated.toDate ? d.updated.toDate().toISOString() : '', version: d.version };
       } catch (e) {
-        return { ok: false, error: '서버에 연결할 수 없습니다' };
+        return { ok: false, error: e instanceof SyntaxError ? '클라우드 저장 데이터가 올바르지 않습니다' : friendly(e) };
       }
     },
   };
