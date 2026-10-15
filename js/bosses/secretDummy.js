@@ -30,7 +30,16 @@
         { name: 'cross', weight: 1.8, cooldown: 6, fn: this.atkCross },
         { name: 'blink', weight: 2, cooldown: 5, fn: this.atkBlink },
         { name: 'meteors', weight: 1.6, cooldown: 6, fn: this.atkMeteors },
+        // Last-Breath style
+        { name: 'blasters', weight: 2.4, cooldown: 6, fn: this.atkBlasters },
+        { name: 'boneWave', weight: 2.4, cooldown: 6, fn: this.atkBoneWave },
+        { name: 'blueOrange', weight: 2, phase: 2, cooldown: 9, fn: this.atkBlueOrange },
+        { name: 'gravity', weight: 1.8, phase: 2, cooldown: 10, fn: this.atkGravity },
+        { name: 'lastBreath', weight: 2.6, phase: 3, cooldown: 20, fn: this.atkLastBreath },
       ];
+      this.blasters = [];
+      this.gravity = 0;
+      this.gravDir = [1, 0];
     }
 
     onPhaseChange() { this.speed *= 1.1; }
@@ -44,7 +53,176 @@
       this.vy = (Math.sin(a) * radial + Math.sin(a + Math.PI / 2) * this.orbit * 0.8) * this.speed;
     }
 
-    updateExtra(dt) { this.spin += dt; }
+    updateExtra(dt) {
+      this.spin += dt;
+      for (let i = this.blasters.length - 1; i >= 0; i--) {
+        this.blasters[i].age += dt;
+        if (this.blasters[i].age > this.blasters[i].warn + 0.8) this.blasters.splice(i, 1);
+      }
+      if (this.gravity > 0) {
+        this.gravity -= dt;
+        const p = this.player;
+        if (p && !p.dead && !p.isDashing) {
+          const c = Geo.clampToArena(p.x + this.gravDir[0] * 300 * dt, p.y + this.gravDir[1] * 300 * dt, p.radius);
+          p.x = c.x;
+          p.y = c.y;
+        }
+      }
+    }
+
+    die() {
+      super.die();
+      this.blasters.length = 0;
+      this.gravity = 0;
+    }
+
+    // A Gaster-Blaster style skull at the arena edge: charges, then fires a thick beam through where you were
+    blaster(x, y, angle, warn) {
+      this.blasters.push({ x, y, angle, age: 0, warn });
+      this.hazard({ shape: 'line', x, y, angle, length: 1800, width: 84, warn, damage: 22, hitWindow: 0.45, linger: 0.2, color: '255,255,255',
+        onActivate: () => { this.game.camera.shakePreset('small'); this.game.audio.play('explosion'); } });
+    }
+
+    edgePoint(fromX, fromY, ang) {
+      return { x: Geo.clamp(fromX + Math.cos(ang) * 900, A.left + 14, A.right - 14), y: Geo.clamp(fromY + Math.sin(ang) * 900, A.top + 14, A.bottom - 14) };
+    }
+
+    bone(x, y, vx, vy, extra) {
+      this.game.projectiles.push(new BR.Projectile(Object.assign({
+        owner: 'boss', x, y, vx, vy, kind: 'bullet', radius: 10, damage: Math.round(12 * this.damageMult), life: 5, color: '255,255,255',
+      }, extra || {})));
+    }
+
+    // Three rounds of blasters: a few aimed ones, a denser aimed volley, then a ring all aiming at the centre
+    *atkBlasters() {
+      this.stop();
+      this.chargeUp(this.T(0.6), '#ffffff');
+      yield this.T(0.6);
+      const p = this.player;
+      const aimed = (n, warn, gap) => {
+        for (let i = 0; i < n; i++) {
+          const e = this.edgePoint(p.x, p.y, Math.random() * Math.PI * 2);
+          this.blaster(e.x, e.y, Geo.angle(e.x, e.y, p.x, p.y), warn + i * gap);
+        }
+      };
+      aimed(3, this.T(1.0), 0.28);
+      yield this.T(1.5);
+      aimed(this.phase >= 3 ? 6 : 5, this.T(0.95), 0.2);
+      yield this.T(1.6);
+      const cx = (A.left + A.right) / 2, cy = (A.top + A.bottom) / 2, off = Math.random() * 6;
+      const n = this.phase >= 3 ? 10 : 8;
+      for (let i = 0; i < n; i++) {
+        const e = this.edgePoint(cx, cy, off + (i / n) * Math.PI * 2);
+        this.blaster(e.x, e.y, Geo.angle(e.x, e.y, cx, cy), this.T(1.2));
+      }
+      yield this.T(2.0);
+    }
+
+    // A wall of bones sweeps across with a gap near you; walls alternate sides (and axes later)
+    *atkBoneWave() {
+      this.stop();
+      this.chargeUp(this.T(0.5), '#ffffff');
+      yield this.T(0.5);
+      const p = this.player, n = this.phase >= 3 ? 7 : 5;
+      for (let i = 0; i < n; i++) {
+        const vertical = this.phase >= 3 ? i % 2 === 0 : true;
+        if (vertical) {
+          const dirX = i % 2 === 0 ? 1 : -1;
+          const x = dirX > 0 ? A.left + 12 : A.right - 12;
+          const gy = Geo.clamp(p.y + Geo.rand(-200, 200), A.top + 90, A.bottom - 90);
+          this.hazard({ shape: 'line', x, y: A.top, angle: Math.PI / 2, length: A.bottom - A.top, width: 14, warn: 0.5, damage: 0, color: '255,255,255' });
+          for (let y = A.top + 18; y < A.bottom; y += 38) if (Math.abs(y - gy) >= 78) this.bone(x, y, dirX * (340 + i * 14), 0);
+        } else {
+          const dirY = (i >> 1) % 2 === 0 ? 1 : -1;
+          const y = dirY > 0 ? A.top + 12 : A.bottom - 12;
+          const gx = Geo.clamp(p.x + Geo.rand(-200, 200), A.left + 90, A.right - 90);
+          this.hazard({ shape: 'line', x: A.left, y, angle: 0, length: A.right - A.left, width: 14, warn: 0.5, damage: 0, color: '255,255,255' });
+          for (let x = A.left + 18; x < A.right; x += 38) if (Math.abs(x - gx) >= 78) this.bone(x, y, 0, dirY * 330);
+        }
+        this.game.audio.play('shoot');
+        yield this.T(0.95);
+      }
+      yield this.T(1.4);
+    }
+
+    // Blue bones hurt only if you MOVE, orange ones only if you STAND STILL
+    *atkBlueOrange() {
+      this.stop();
+      this.chargeUp(this.T(0.6), '#4ab0ff');
+      let blue = Math.random() < 0.5;
+      yield this.T(0.6);
+      for (let i = 0; i < 6; i++) {
+        this.statusText = blue ? 'BLUE — STAND STILL' : 'ORANGE — KEEP MOVING';
+        const dirX = i % 2 === 0 ? 1 : -1, x = dirX > 0 ? A.left + 12 : A.right - 12;
+        const rgb = blue ? '80,170,255' : '255,160,50';
+        this.hazard({ shape: 'line', x, y: A.top, angle: Math.PI / 2, length: A.bottom - A.top, width: 18, warn: 0.7, damage: 0, color: rgb });
+        yield 0.7;
+        for (let y = A.top + 18; y < A.bottom; y += 36) {
+          this.bone(x, y, dirX * 500, 0, { radius: 11, damage: Math.round(14 * this.damageMult), life: 3, color: rgb, mode: blue ? 'blue' : 'orange', unclearable: true });
+        }
+        blue = !blue;
+        yield this.T(1.3);
+      }
+      this.statusText = '';
+      yield this.T(0.6);
+    }
+
+    // Gravity: you are dragged toward a side wall while its spike strip charges
+    *atkGravity() {
+      this.stop();
+      const right = Math.random() < 0.5, x0 = right ? A.right - 120 : A.left;
+      this.chargeUp(this.T(0.6), '#4a6bff');
+      this.statusText = right ? 'GRAVITY →' : 'GRAVITY ←';
+      yield this.T(0.6);
+      this.hazard({ shape: 'rect', x: x0, y: A.top, w: 120, h: A.bottom - A.top, warn: 1.8, damage: 20, color: '90,120,255', linger: 0.4 });
+      this.gravDir = [right ? 1 : -1, 0];
+      yield 0.3;
+      this.gravity = 0.8;
+      yield 1.8;
+      this.statusText = '';
+      const p = this.player;
+      for (let i = 0; i < 2; i++) {
+        const e = this.edgePoint(p.x, p.y, Math.random() * Math.PI * 2);
+        this.blaster(e.x, e.y, Geo.angle(e.x, e.y, p.x, p.y), this.T(1.0) + i * 0.3);
+      }
+      yield this.T(1.8);
+    }
+
+    // The finale: everything, back to back, no breathing room
+    *atkLastBreath() {
+      this.statusText = 'LAST BREATH';
+      yield* this.atkBoneWave();
+      yield 0.15;
+      yield* this.atkBlasters();
+      yield 0.15;
+      yield* this.atkBlueOrange();
+      yield 0.15;
+      yield* this.atkGravity();
+      yield 0.15;
+      yield* this.atkBlasters();
+      this.statusText = '';
+    }
+
+    draw(ctx, time) {
+      for (const b of this.blasters) {
+        const open = Math.min(1, Math.max(0, (b.age - b.warn + 0.12) / 0.2));
+        const pulse = Math.min(1, b.age / b.warn);
+        ctx.save();
+        ctx.translate(b.x, b.y);
+        ctx.rotate(b.angle);
+        Draw.glow(ctx, 8, 0, 40, '255,255,255', 0.25 + 0.5 * pulse);
+        ctx.fillStyle = '#f4f4f4'; ctx.strokeStyle = '#111'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.ellipse(0, 0, 24, 18, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#111';
+        ctx.beginPath(); ctx.arc(8, -7, 4, 0, Math.PI * 2); ctx.arc(8, 7, 4, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = `rgba(90,200,255,${0.4 + 0.6 * pulse})`;
+        ctx.beginPath(); ctx.arc(8, -7, 2, 0, Math.PI * 2); ctx.arc(8, 7, 2, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#e8e8e8';
+        ctx.fillRect(14, -9 - open * 6, 12, 5); ctx.fillRect(14, 4 + open * 6, 12, 5);
+        ctx.restore();
+      }
+      super.draw(ctx, time);
+    }
 
     *atkHell() {
       this.stop();

@@ -26,6 +26,7 @@
       this.bounces = o.bounces || 0;        // wall bounces left
       this.onExpire = o.onExpire || null;   // called when life runs out (not on hit)
       this.color = o.color || null;         // rgb string for tinted kinds
+      this.mode = o.mode || null;           // 'blue' hurts only while you move, 'orange' only while you stand still
       this.isSkill = !!o.isSkill;
       this.isFinisher = !!o.isFinisher;
       this.unclearable = !!o.unclearable;   // skills can't delete it (big boss bullets)

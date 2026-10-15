@@ -55,7 +55,7 @@
             }
           }
           if (proj.clearsProjectiles) this._clearAround(proj.x, proj.y, proj.radius + 10);
-        } else if (!player.dead && player.iframes <= 0 &&
+        } else if (!player.dead && player.iframes <= 0 && this._modeHurts(proj, player) &&
                    Geo.circlesOverlap(proj.x, proj.y, proj.radius * 0.85, player.x, player.y, player.radius * 0.8)) {
           if (player.stats.reflectChance && !proj.unclearable && Math.random() < player.stats.reflectChance) {
             // Mirror Shield: send it back
@@ -110,6 +110,13 @@
         }
       }
       return cleared;
+    }
+
+    // Blue bones hurt only while you move, orange ones only while you stand still
+    _modeHurts(proj, player) {
+      if (!proj.mode) return true;
+      const moving = Math.hypot(player.vx, player.vy) > 60;
+      return proj.mode === 'blue' ? moving : !moving;
     }
 
     /* ---------------- player basic attacks ---------------- */

@@ -408,10 +408,17 @@
       if (b.maxHp !== 50000) bad.push('hp ' + b.maxHp);
       if (b.speedMult !== 2.5) bad.push('speed');
       step(200, null);
+      const pl = g.player, cb = g.combat;
+      pl.vx = 0; pl.vy = 0;
+      if (cb._modeHurts({ mode: 'blue' }, pl) || !cb._modeHurts({ mode: 'orange' }, pl)) bad.push('blue/orange while still');
+      pl.vx = 220;
+      if (!cb._modeHurts({ mode: 'blue' }, pl) || cb._modeHurts({ mode: 'orange' }, pl)) bad.push('blue/orange while moving');
+      pl.vx = 0;
       for (const atk of b.attacks) {
         b.idleTimer = 999; b.startAttack(atk);
         let f = 0;
-        while ((b.routine || g.hazards.length) && f < 60 * 14) { if (!b.routine) b.idleTimer = 999; if (!step(1, () => { g.player.hp = g.player.stats.maxHp; }, 20)) break; f++; }
+        const cap = 60 * (atk.name === 'lastBreath' ? 70 : 14);
+        while ((b.routine || g.hazards.length) && f < cap) { if (!b.routine) b.idleTimer = 999; if (!step(1, () => { g.player.hp = g.player.stats.maxHp; }, 20)) break; f++; }
         if (b.routine) bad.push(atk.name + ' never ends');
       }
       killBoss();
