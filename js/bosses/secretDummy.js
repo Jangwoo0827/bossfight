@@ -46,6 +46,14 @@
 
     onPhaseChange() { this.speed *= 1.1; }
 
+    // No single hit (parry counters included) may take more than 5% of its health or skip a phase
+    takeDamage(amount) {
+      amount = Math.min(amount, this.maxHp * 0.05);
+      const th = this.phaseThresholds[this.phase - 1];
+      if (th !== undefined) amount = Math.min(amount, Math.max(1, this.hp - (Math.ceil(this.maxHp * th) - 1)));
+      super.takeDamage(amount);
+    }
+
     idleMove() {
       const d = this.distToPlayer(), a = this.angleToPlayer();
       this.facing = a;

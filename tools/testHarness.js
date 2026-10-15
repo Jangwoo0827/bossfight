@@ -420,6 +420,12 @@
       b.exhausted = 2;
       if (b.incomingMultiplier(0, 0) !== 1.5) bad.push('exhausted not vulnerable');
       b.exhausted = 0;
+      const hpFull = b.hp;
+      b.takeDamage(99999);
+      if (hpFull - b.hp > b.maxHp * 0.05 + 0.5) bad.push('hit cap ' + (hpFull - b.hp));
+      b.hp = 760; b.takeDamage(50);
+      if (b.hp !== 749) bad.push('phase skip guard ' + b.hp);
+      b.hp = hpFull;
       for (const atk of b.attacks) {
         b.idleTimer = 999; b.startAttack(atk);
         let f = 0;
