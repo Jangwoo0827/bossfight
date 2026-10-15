@@ -238,14 +238,14 @@
 
   // Easter egg: summoned by destroying the tutorial dummy (not in the pool or bestiary)
   BR.BOSS_BY_ID.secretDummy = {
-    id: 'secretDummy', name: 'UNBOUND DUMMY', title: 'It Stopped Being Gentle', hp: 50000, radius: 40, difficulty: 10, dmg: 1.5,
+    id: 'secretDummy', name: 'UNBOUND DUMMY', title: 'It Stopped Being Gentle', hp: 1000, radius: 40, difficulty: 10, dmg: 1.5,
     arena: 'abyss', color: '#ff3030', rgb: '255,48,48', phaseThresholds: [0.75, 0.5, 0.25],
     tip: '', quote: '…장난은 여기까지.',
   };
 
   // Tutorial-only target (not part of the boss pool or bestiary)
   BR.BOSS_BY_ID.trainingDummy = {
-    id: 'trainingDummy', name: 'TRAINING DUMMY', title: 'It Hits Back (Gently)', hp: 5000, radius: 34,
+    id: 'trainingDummy', name: 'TRAINING DUMMY', title: 'It Hits Back (Gently)', hp: 50000, radius: 34,
     difficulty: 1, arena: 'stone', color: '#c9a35a', phaseThresholds: [], tip: '',
   };
 })();

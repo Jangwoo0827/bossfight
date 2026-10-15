@@ -390,7 +390,7 @@
     return { ok: bad.length === 0, detail: bad.join(', ') };
   });
 
-  await test('easter egg: destroying the tutorial dummy summons the 50000 HP boss; +25000 SOUL once', () => {
+  await test('easter egg: destroying the tutorial dummy summons the 1000 HP boss; +25000 SOUL once', () => {
     const bad = [];
     const keepSoul = g.saveData.soul, keepDone = g.saveData.secretDone;
     g.saveData.secretDone = false;
@@ -405,8 +405,8 @@
       bad.push('not summoned: ' + g.run.mode);
     } else {
       const b = g.boss;
-      if (b.maxHp !== 50000) bad.push('hp ' + b.maxHp);
-      if (b.speedMult !== 2.5) bad.push('speed');
+      if (b.maxHp !== 1000) bad.push('hp ' + b.maxHp);
+      if (b.speedMult !== 3.5) bad.push('speed');
       step(200, null);
       const pl = g.player, cb = g.combat;
       pl.vx = 0; pl.vy = 0;
@@ -414,10 +414,16 @@
       pl.vx = 220;
       if (!cb._modeHurts({ mode: 'blue' }, pl) || cb._modeHurts({ mode: 'orange' }, pl)) bad.push('blue/orange while moving');
       pl.vx = 0;
+      let missed = 0;
+      for (let i = 0; i < 300; i++) if (b.incomingMultiplier(0, 0) === 0) missed++;
+      if (missed < 240 || missed > 295) bad.push('dodge rate ' + missed + '/300');
+      b.exhausted = 2;
+      if (b.incomingMultiplier(0, 0) !== 1.5) bad.push('exhausted not vulnerable');
+      b.exhausted = 0;
       for (const atk of b.attacks) {
         b.idleTimer = 999; b.startAttack(atk);
         let f = 0;
-        const cap = 60 * (atk.name === 'lastBreath' ? 70 : 14);
+        const cap = 60 * (atk.name === 'lastBreath' ? 80 : 14);
         while ((b.routine || g.hazards.length) && f < cap) { if (!b.routine) b.idleTimer = 999; if (!step(1, () => { g.player.hp = g.player.stats.maxHp; }, 20)) break; f++; }
         if (b.routine) bad.push(atk.name + ' never ends');
       }

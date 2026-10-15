@@ -576,7 +576,7 @@
       const incoming = opts.dot || opts.parry ? 1 : boss.incomingMultiplier(sx, sy);
       if (incoming <= 0) {
         g.particles.emit('spark', x, y, 6, { angle: Geo.angle(boss.x, boss.y, sx, sy), spread: 1 });
-        g.spawnText(x, y - 12, 'BLOCKED', { color: '#c9c9c9', size: 13, life: 0.45 });
+        g.spawnText(x, y - 12, boss.blockText || 'BLOCKED', { color: boss.blockText ? '#ffffff' : '#c9c9c9', size: boss.blockText ? 18 : 13, life: 0.45 });
         g.audio.play('hit');
         boss.onBlocked(sx, sy);
         return 0;

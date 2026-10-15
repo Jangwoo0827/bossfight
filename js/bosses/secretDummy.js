@@ -12,7 +12,9 @@
     constructor(game, def, opts) {
       super(game, def, opts);
       this.rgb = def.rgb;
-      this.speedMult = 2.5;
+      this.speedMult = 3.5;
+      this.blockText = 'MISS';
+      this.exhausted = 0;
       this.baseSpeed = 110;
       this.speed = 110;
       this.tempoByPhase = [0.8, 0.7, 0.6, 0.5];
@@ -53,8 +55,21 @@
       this.vy = (Math.sin(a) * radial + Math.sin(a + Math.PI / 2) * this.orbit * 0.8) * this.speed;
     }
 
+    // Sans-style: almost every normal hit is dodged. Parry counters, burns and stunned / exhausted moments always land.
+    incomingMultiplier() {
+      if (this.exhausted > 0) return 1.5;
+      if (this.state === 'STUNNED') return 1;
+      if (Math.random() < (this.phase >= 3 ? 0.94 : 0.9)) {
+        const a = this.angleToPlayer() + (Math.random() < 0.5 ? 1 : -1) * Geo.rand(1.0, 2.2);
+        this.teleportTo(this.x + Math.cos(a) * Geo.rand(110, 190), this.y + Math.sin(a) * Geo.rand(110, 190), 'abyss');
+        return 0;
+      }
+      return 1;
+    }
+
     updateExtra(dt) {
       this.spin += dt;
+      this.exhausted = Math.max(0, this.exhausted - dt);
       for (let i = this.blasters.length - 1; i >= 0; i--) {
         this.blasters[i].age += dt;
         if (this.blasters[i].age > this.blasters[i].warn + 0.8) this.blasters.splice(i, 1);
@@ -200,6 +215,11 @@
       yield* this.atkGravity();
       yield 0.15;
       yield* this.atkBlasters();
+      // ...and then it runs out of breath
+      this.stop();
+      this.exhausted = 4;
+      this.statusText = 'EXHAUSTED — HIT NOW!';
+      yield 4;
       this.statusText = '';
     }
 
